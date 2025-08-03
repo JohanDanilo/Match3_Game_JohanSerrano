@@ -1,66 +1,114 @@
 #include <SFML/Graphics.hpp>
+#include "Gem.h"
+#include <ctime>
+#include <cstdlib>
+#include <iostream>
+#include <cmath> // Para abs()
 
-int main()
-{
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Mover gema con click derecho");
-    window.setFramerateLimit(60);
+const int tileSize = 64;
+const int boardSize = 8;
 
-    // Cargar textura y sprite
+int board[boardSize][boardSize]; // Gemas como enteros (tipo)
+sf::Sprite gems[boardSize][boardSize]; // Gemas visibles (sprites)
+sf::Vector2i selectedGem(-1, -1); // Gema seleccionada con clic derecho
+
+// Verifica si hay combinación de 3 o más
+bool hayCombinacion(int b[8][8]) {
+    // Horizontal
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 6; ++x) {
+            int tipo = b[y][x];
+            if (tipo == b[y][x + 1] && tipo == b[y][x + 2])
+                return true;
+        }
+    }
+
+    // Vertical
+    for (int x = 0; x < 8; ++x) {
+        for (int y = 0; y < 6; ++y) {
+            int tipo = b[y][x];
+            if (tipo == b[y + 1][x] && tipo == b[y + 2][x])
+                return true;
+        }
+    }
+
+    return false;
+}
+
+int main() {
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Match-3");
+
+    // Cargar textura con todas las gemas (una fila horizontal con 5 tipos por ejemplo)
     sf::Texture texture;
-    if (!texture.loadFromFile("assets/TimeStone.png"))
-        return -1;
+    texture.loadFromFile("assets/gems1.png");
 
-    sf::Sprite sprite;
-    sprite.setTexture(texture);
+    // Inicializa tablero con valores aleatorios (del 0 al 4)
+    for (int y = 0; y < boardSize; ++y) {
+        for (int x = 0; x < boardSize; ++x) {
+            board[y][x] = rand() % 5;
 
-    sprite.setScale(0.2f, 0.2f);
+            gems[y][x].setTexture(texture);
+            gems[y][x].setTextureRect(sf::IntRect(board[y][x] * tileSize, 0, tileSize, tileSize));
+            gems[y][x].setPosition(x * tileSize, y * tileSize);
+        }
+    }
 
-    // Centrar el origen del sprite
-    sf::FloatRect bounds = sprite.getLocalBounds();
-    sprite.setOrigin(bounds.width / 2, bounds.height / 2);
-
-    // Posición inicial en el centro de la ventana
-    sprite.setPosition(window.getSize().x / 2.0f, window.getSize().y / 2.0f);
-
-    bool dragging = false;
-
-    while (window.isOpen())
-    {
+    while (window.isOpen()) {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
+        while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+        }
 
-            // Cuando presionas el botón derecho del mouse
-            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Right)
-            {
-                // Obtener posición del mouse y convertirla a coordenadas del mundo
-                sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+        // Lógica de clic derecho para seleccionar e intercambiar
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            int x = mousePos.x / tileSize;
+            int y = mousePos.y / tileSize;
 
-                // Verificar si el mouse está sobre la gema
-                if (sprite.getGlobalBounds().contains(mousePos))
-                {
-                    dragging = true;
+            if (x >= 0 && x < boardSize && y >= 0 && y < boardSize) {
+                if (selectedGem == sf::Vector2i(-1, -1)) {
+                    selectedGem = sf::Vector2i(x, y); // Selecciona primera gema
+                }
+                else {
+                    sf::Vector2i secondGem(x, y);
+                    int dx = abs(secondGem.x - selectedGem.x);
+                    int dy = abs(secondGem.y - selectedGem.y);
+
+                    // Si es adyacente
+                    if ((dx == 1 && dy == 0) || (dx == 0 && dy == 1)) {
+                        // Intercambia en la matriz lógica
+                        std::swap(board[selectedGem.y][selectedGem.x], board[secondGem.y][secondGem.x]);
+
+                        // Verifica combinación
+                        if (!hayCombinacion(board)) {
+                            // Si no hay combinación, revertimos
+                            std::swap(board[selectedGem.y][selectedGem.x], board[secondGem.y][secondGem.x]);
+                        }
+                        else {
+                            // Si hubo combinación, actualizamos sprites
+                            for (int y = 0; y < boardSize; ++y) {
+                                for (int x = 0; x < boardSize; ++x) {
+                                    gems[y][x].setTextureRect(sf::IntRect(board[y][x] * tileSize, 0, tileSize, tileSize));
+                                }
+                            }
+                        }
+                    }
+
+                    selectedGem = sf::Vector2i(-1, -1); // Reset selección
+                    sf::sleep(sf::milliseconds(150)); // Pequeño delay para evitar múltiples clics
                 }
             }
+        }
 
-            // Cuando sueltas el botón derecho del mouse
-            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Right)
-            {
-                dragging = false;
+        // Dibujar
+        window.clear();
+        for (int y = 0; y < boardSize; ++y) {
+            for (int x = 0; x < boardSize; ++x) {
+                gems[y][x].setPosition(x * tileSize, y * tileSize);
+                window.draw(gems[y][x]);
             }
         }
-
-        // Si estás arrastrando, mover la gema a la posición del mouse
-        if (dragging)
-        {
-            sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-            sprite.setPosition(mousePos);
-        }
-
-        window.clear(sf::Color::Black);
-        window.draw(sprite);
         window.display();
     }
 
