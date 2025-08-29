@@ -1,53 +1,46 @@
 #include "Gem.h"
-const int TILE_SIZE = 64;
-const int BOARD_SIZE = 8;
 
 Gem::Gem()
 {
-	type = 0;
-	boardPosition = Vector2i(0, 0);
+	boardPosition = offset;
+	x = y = 0.0;
+	colum = row = kind = 0;
+	alpha = 255;
 }
 
-Gem::Gem(int aType, const Texture& aTexture, const Vector2i aPosition)
+Gem::Gem(int aKind, int aRow, int aCol)
 {
-	type = aType;
-	sprite.setTexture(aTexture);
-	sprite.setTextureRect(sf::IntRect(type * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE));
-	boardPosition = aPosition;
-	sprite.setPosition(boardPosition.x * TILE_SIZE, boardPosition.y * TILE_SIZE);
-	setBoardPosition(aPosition); // esto asegura que la gema se posicione bien
+	kind = aKind;
+	row = aRow;
+	colum = aCol;
+	x = colum * TILE_SIZE;
+	y = row * TILE_SIZE;
+	alpha = 255;
+
 }
 
-void Gem::setType(int aType)
+void Gem::draw(RenderWindow& window, const Texture& texture) const
 {
-	type = aType;
-	sprite.setTextureRect(IntRect(type * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE));
+	Sprite gem(texture);
+	gem.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+	gem.setColor(Color(255, 255, 255, alpha));
+	gem.setPosition(x, y);
+	gem.move(offset.x - TILE_SIZE, offset.y - TILE_SIZE);
+	window.draw(gem);
 }
 
-int Gem::getType()
+void Gem::setKind(int aKind)
 {
-	return type;
+	kind = aKind;
 }
 
-void Gem::setBoardPosition(const Vector2i& aPosition)
+int Gem::getKind()
 {
-	boardPosition = aPosition;
-	// Convertir coordenadas de tablero (x, y) a píxeles
-	sprite.setPosition(static_cast<float>(aPosition.x * 64), static_cast<float>(aPosition.y * 64));
+	return kind;
 }
 
 
-Vector2i Gem::getBoardPosition()
+Vector2f Gem::getBoardPosition()
 {
 	return boardPosition;
-}
-
-void Gem::setPixelPosition(float x, float y)
-{
-	sprite.setPosition(x, y);
-}
-
-Sprite& Gem::getSprite()
-{
-	return sprite;
 }
