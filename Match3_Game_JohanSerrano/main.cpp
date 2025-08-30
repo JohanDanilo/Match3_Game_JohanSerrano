@@ -1,25 +1,23 @@
 #include <SFML/Graphics.hpp>
-#include <ctime>
+#include <iostream>
 using namespace sf;
 using namespace std;
 #include "Gem.h"
-
-float ts = 58;
-
+#include "Board.h"
 
 int main()
 {
-    srand(time(0));
 
     RenderWindow app(VideoMode(800, 600), "Match-3 Game!");
     app.setFramerateLimit(60);
 
-    Texture t1, t2;
+    Texture t1;
     t1.loadFromFile("assets/background.png");
-    t2.loadFromFile("assets/spritesheet.png");
 
-    Sprite background(t1), gems(t2);
+    Sprite background(t1);
 
+    Board grid;
+    grid.initialize();
 
     int click = 0;
     //bool isSwap = false, isMoving = false;
@@ -28,36 +26,58 @@ int main()
 
     while (app.isOpen()) {
         Event e;
+
+
         while (app.pollEvent(e)) {
             if (e.type == Event::Closed)
                 app.close();
 
             if (e.type == Event::MouseButtonPressed && e.mouseButton.button == Mouse::Right) {
-                //int col = e.mousebutton.x / ts; // convertir píxeles a índice
-                //int row = e.mousebutton.y / ts;
+                //Just some tests
+                ////gem.actualizarPosicionConClick(app, e);
 
-                if (click == 0) {
-                    click = 1;
-                    position1 = Mouse::getPosition(app);
-                }
-                else if (click == 1) {
-                    position2 = Mouse::getPosition(app);
+                // Obtener las coordenadas del mouse en la ventana
+                Vector2i posicionMouse(e.mouseButton.x, e.mouseButton.y);
 
-                    //Gem& selectedGem = grid.getGem(firstRow, firstCol);
+                //Convertir coordenadas de ventana a coordenadas del mundo (útil si usas vistas/cámaras)
+                Vector2f worldPos = app.mapPixelToCoords(posicionMouse);
 
-                    //selectedGem1.setTarget(secondRow, secondCol); // mover suavemente
-                    //selectedGem2.setTarget(firstRow, firstCol);
+                cout << worldPos.x << " " << worldPos.y << endl;
 
-                    click = 0; // reiniciar
-                }
+                worldPos.x -= TILE_SIZE/2; worldPos.y -= TILE_SIZE/2;
+
+                //gem.getSprite().setPosition(worldPos);
+
+                //if (click == 0) {
+                //    click = 1;
+                //    position1 = Mouse::getPosition(app);
+                //}
+                //else if (click == 1) {
+                //    position2 = Mouse::getPosition(app);
+
+                //    // Llamar al método para actualizar posición
+                //    
+
+                //    click = 0; // reiniciar
+                //}
             }
 
 
         }
 
+        Texture gems;
+        gems.loadFromFile("assets/spritesheet.png");
+        
         app.clear();
         app.draw(background);
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                grid.getGem(i, j).draw(app, gems);
+            }
+        }
+        //gem.draw(app, t2);
         app.display();
     }
+
     return 0;
 }

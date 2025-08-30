@@ -3,9 +3,9 @@
 using namespace sf;
 
 const float TILE_SIZE = 58;
-const float GEM_WIDTH = 47;  // ancho de cada gema
-const float GEM_HEIGHT = 54; // alto real de la imagen
-const Vector2f offset(170, 70);
+const int GEM_WIDTH = 47;  // ancho de cada gema
+const int GEM_HEIGHT = 54; // alto real de la imagen
+const Vector2f offset(171, 70);
 
 class Gem
 {
@@ -15,14 +15,22 @@ private:
 	int alpha;      // Transparencia (255 visible, 0 invisible)
 	int kind;
 	Vector2f boardPosition;
+	Sprite gemSprite;
 	
 public:
 	Gem();
 	Gem(int aKind, int aRow, int aCol);
+	~Gem();
 
-	void draw(RenderWindow& window, const Texture& texture) const;
+	void setSprite(Texture& texture);
+
+	void draw(RenderWindow& window, Texture& texture);
+	
 	void setKind(int aType);
 	int getKind();
+	Sprite& getSprite();
+	// Método para actualizar posición con click derecho
+	void actualizarPosicionConClick(RenderWindow& ventana, Event evento);
 	Vector2f getBoardPosition();
 
 };

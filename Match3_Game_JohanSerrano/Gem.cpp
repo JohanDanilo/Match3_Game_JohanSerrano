@@ -16,18 +16,28 @@ Gem::Gem(int aKind, int aRow, int aCol)
 	x = colum * TILE_SIZE;
 	y = row * TILE_SIZE;
 	alpha = 255;
-
+	gemSprite.setPosition(x + offset.x , y + offset.y);
 }
 
-void Gem::draw(RenderWindow& window, const Texture& texture) const
+Gem::~Gem()
 {
-	Sprite gem(texture);
-	gem.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
-	gem.setColor(Color(255, 255, 255, alpha));
-	gem.setPosition(x, y);
-	gem.move(offset.x - TILE_SIZE, offset.y - TILE_SIZE);
-	window.draw(gem);
 }
+
+void Gem::setSprite(Texture& texture)
+{
+	gemSprite.setTexture(texture);
+	gemSprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+	gemSprite.setColor(Color(255, 255, 255, alpha));
+}
+
+void Gem::draw(RenderWindow& window, Texture& texture)
+{
+	gemSprite.setTexture(texture);
+	gemSprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+	gemSprite.setColor(Color(255, 255, 255, alpha));
+	window.draw(gemSprite);
+}
+
 
 void Gem::setKind(int aKind)
 {
@@ -39,6 +49,24 @@ int Gem::getKind()
 	return kind;
 }
 
+Sprite& Gem::getSprite()
+{
+	return gemSprite;
+}
+
+void Gem::actualizarPosicionConClick(RenderWindow& ventana, Event evento) {
+	// Obtener las coordenadas del mouse en la ventana
+	Vector2i posicionMouse(evento.mouseButton.x, evento.mouseButton.y);
+
+	// Convertir coordenadas de ventana a mundo
+	Vector2f worldPos = ventana.mapPixelToCoords(posicionMouse);
+
+	// Actualizar la posición lógica de la gema
+	worldPos.x -= TILE_SIZE / 2; 
+	worldPos.y -= TILE_SIZE / 2;
+
+	gemSprite.setPosition(x, y);
+}
 
 Vector2f Gem::getBoardPosition()
 {
