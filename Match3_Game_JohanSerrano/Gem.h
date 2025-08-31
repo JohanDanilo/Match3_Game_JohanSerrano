@@ -15,20 +15,23 @@ private:
 	int alpha;      // Transparencia (255 visible, 0 invisible)
 	int kind;
 	Vector2f boardPosition;
-	Sprite gemSprite;
 	
 public:
 	Gem();
 	Gem(int aKind, int aRow, int aCol);
 	~Gem();
 
-	void setSprite(Texture& texture);
-
-	void draw(RenderWindow& window, Texture& texture);
+	void initialDraw(RenderWindow& window,Texture& texture);
 	
 	void setKind(int aType);
 	int getKind();
-	Sprite& getSprite();
+
+	int& getRow();
+	int& getColum();
+
+	float& getX();
+	float& getY();
+
 	// Método para actualizar posición con click derecho
 	void actualizarPosicionConClick(RenderWindow& ventana, Event evento);
 	Vector2f getBoardPosition();

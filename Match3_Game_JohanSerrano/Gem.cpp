@@ -16,24 +16,18 @@ Gem::Gem(int aKind, int aRow, int aCol)
 	x = colum * TILE_SIZE;
 	y = row * TILE_SIZE;
 	alpha = 255;
-	gemSprite.setPosition(x + offset.x , y + offset.y);
 }
 
 Gem::~Gem()
 {
 }
 
-void Gem::setSprite(Texture& texture)
-{
+void Gem::initialDraw(RenderWindow& window, Texture& texture) //getSprite(texture).setPosition(x + offset.x, y + offset.y);
+{	
+	Sprite gemSprite;
 	gemSprite.setTexture(texture);
 	gemSprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
-	gemSprite.setColor(Color(255, 255, 255, alpha));
-}
-
-void Gem::draw(RenderWindow& window, Texture& texture)
-{
-	gemSprite.setTexture(texture);
-	gemSprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+	gemSprite.setPosition(x + offset.x, y + offset.y);
 	gemSprite.setColor(Color(255, 255, 255, alpha));
 	window.draw(gemSprite);
 }
@@ -49,9 +43,24 @@ int Gem::getKind()
 	return kind;
 }
 
-Sprite& Gem::getSprite()
+int& Gem::getRow()
 {
-	return gemSprite;
+	return row;
+}
+
+int& Gem::getColum()
+{
+	return colum;
+}
+
+float& Gem::getX()
+{
+	return x;
+}
+
+float& Gem::getY()
+{
+	return y;
 }
 
 void Gem::actualizarPosicionConClick(RenderWindow& ventana, Event evento) {
@@ -65,7 +74,7 @@ void Gem::actualizarPosicionConClick(RenderWindow& ventana, Event evento) {
 	worldPos.x -= TILE_SIZE / 2; 
 	worldPos.y -= TILE_SIZE / 2;
 
-	gemSprite.setPosition(x, y);
+	//gemSprite.setPosition(x, y);
 }
 
 Vector2f Gem::getBoardPosition()

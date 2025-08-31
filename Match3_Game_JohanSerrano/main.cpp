@@ -24,6 +24,11 @@ int main()
 
     Vector2i position1, position2;
 
+    Texture gems;
+    gems.loadFromFile("assets/spritesheet.png");
+
+    Gem gema(1, 8, 0);
+
     while (app.isOpen()) {
         Event e;
 
@@ -34,48 +39,74 @@ int main()
 
             if (e.type == Event::MouseButtonPressed && e.mouseButton.button == Mouse::Right) {
                 //Just some tests
-                ////gem.actualizarPosicionConClick(app, e);
 
-                // Obtener las coordenadas del mouse en la ventana
-                Vector2i posicionMouse(e.mouseButton.x, e.mouseButton.y);
+                if (click == 0) {
+                    click = 1;
+                    position1 = Mouse::getPosition(app);
+                    int x = position1.x, y = position1.y;
 
-                //Convertir coordenadas de ventana a coordenadas del mundo (útil si usas vistas/cámaras)
-                Vector2f worldPos = app.mapPixelToCoords(posicionMouse);
+                    Vector2f worldPos1 = app.mapPixelToCoords(position1);
 
-                cout << worldPos.x << " " << worldPos.y << endl;
+                    //cout << position1.x << " " << position1.y << endl;
 
-                worldPos.x -= TILE_SIZE/2; worldPos.y -= TILE_SIZE/2;
+                    // convertir a índices de grilla
+                    int col = (x - offset.x) / TILE_SIZE;
+                    int row = (y - offset.y) / TILE_SIZE;
 
-                //gem.getSprite().setPosition(worldPos);
+                    //cout << row << " " << col << endl;
 
-                //if (click == 0) {
-                //    click = 1;
-                //    position1 = Mouse::getPosition(app);
-                //}
-                //else if (click == 1) {
-                //    position2 = Mouse::getPosition(app);
+                    float x1 = grid.getGem(row, col).getX();
+                    float y1 = grid.getGem(row, col).getY();
 
-                //    // Llamar al método para actualizar posición
-                //    
+                    if( (x1 + offset.x <= worldPos1.x && worldPos1.x <= x1 + offset.x + TILE_SIZE)
+                        && (y1 + offset.y <= worldPos1.y && worldPos1.y <= y1 + offset.y + TILE_SIZE)) {
+                        cout << "The first selected gem with the right click in the window is: " << grid.getGem(row, col).getRow() << ", " << grid.getGem(row, col).getColum();
+                        cout << " and the clicked position is: " << position1.x << " " << position1.y << endl;
+                    }
+                }
 
-                //    click = 0; // reiniciar
-                //}
+
+                else if (click == 1) {
+                    
+                    position2 = Mouse::getPosition(app);
+                    int x = position2.x, y = position2.y;
+                    Vector2f worldPos2 = app.mapPixelToCoords(position2);
+
+                    //cout << position1.x << " " << position1.y << endl;
+
+                    // convertir a índices de grilla
+                    int col = (x - offset.x) / TILE_SIZE;
+                    int row = (y - offset.y) / TILE_SIZE;
+
+                    //cout << row << " " << col << endl;
+
+                    float x2 = grid.getGem(row, col).getX();
+                    float y2 = grid.getGem(row, col).getY();
+
+                    if ((x2 + offset.x <= worldPos2.x && worldPos2.x <= x2 + offset.x + TILE_SIZE)
+                        && (y2 + offset.y <= worldPos2.y && worldPos2.y <= y2 + offset.y + TILE_SIZE)) {
+                        cout << "\nThe second selected gem with the right click in the window is: " << row << ", " << col ;
+                        cout << " and the clicked position is: " << position2.x << " " << position2.y << endl;
+
+                    }
+                    click = 0;
+                }
             }
 
 
         }
-
-        Texture gems;
-        gems.loadFromFile("assets/spritesheet.png");
         
         app.clear();
         app.draw(background);
+
+        gema.initialDraw(app, gems);
+
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                grid.getGem(i, j).draw(app, gems);
+                grid.getGem(i, j).initialDraw(app, gems);
             }
         }
-        //gem.draw(app, t2);
+
         app.display();
     }
 
