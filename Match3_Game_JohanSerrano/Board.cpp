@@ -35,11 +35,52 @@ bool Board::areAdjacent( Gem& a, Gem& b) const {
     return areAdjacent(a.getRow(), a.getColum(), b.getRow(), b.getColum());
 }
 
-void Board::moveGemTo(Gem& gem, Vector2f& destiny)
+void Board::moveGemsIfHasMatch(int aRow, int aColum, int anotherRow, int anotherColum)
 {
 }
+
+
 
 Gem& Board::getGem(int x, int y)
 {
     return grid[x][y];
+}
+
+bool Board::isInBounds(RenderWindow& window)
+{
+    Vector2i position;
+    position = Mouse::getPosition(window);
+    int mouseX = position.x, mouseY = position.y;
+
+    Vector2f worldPosition = window.mapPixelToCoords(position);
+
+    int col = (mouseX - offset.x) / TILE_SIZE;
+    int row = (mouseY - offset.y) / TILE_SIZE;
+
+    if (col < 0 || col >= BOARD_WIDTH || row < 0 || row >= BOARD_HEIGTH) {
+        return false;
+    }
+    return true;
+}
+
+bool Board::isSelectedGem(RenderWindow& window)
+{
+
+    Vector2i position;
+    position = Mouse::getPosition(window);
+    int mouseX = position.x, mouseY = position.y;
+
+    Vector2f worldPosition = window.mapPixelToCoords(position);
+
+    int col = (mouseX - offset.x) / TILE_SIZE;
+    int row = (mouseY - offset.y) / TILE_SIZE;
+
+    float gemXAxis = getGem(row, col).getX();
+    float gemYAxis = getGem(row, col).getY();
+
+    if ((gemXAxis + offset.x <= worldPosition.x && worldPosition.x <= gemXAxis + offset.x + TILE_SIZE)
+        && (gemYAxis + offset.y <= worldPosition.y && worldPosition.y <= gemYAxis + offset.y + TILE_SIZE)) {
+        return true;
+    }
+    return false;
 }
