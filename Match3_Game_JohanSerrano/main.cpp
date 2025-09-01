@@ -9,7 +9,7 @@ int main()
 {
 
     RenderWindow app(VideoMode(800, 600), "Match-3 Game!");
-    app.setFramerateLimit(60);
+    app.setFramerateLimit(144);
 
     Texture t1;
     t1.loadFromFile("assets/background.png");
@@ -20,49 +20,36 @@ int main()
     grid.initialize();
 
     int click = 0;
-    //bool isSwap = false, isMoving = false;
 
     Vector2i position1, position2;
 
     Texture gems;
     gems.loadFromFile("assets/spritesheet.png");
 
-    Gem gema(1, 8, 0);
+    //Gem gema(1, 8, 0);
+
+    bool isStarted = true;
+
+    Clock clock;
+
 
     while (app.isOpen()) {
+        float dt = clock.restart().asSeconds();
+
         Event e;
 
-
         while (app.pollEvent(e)) {
-            if (e.type == Event::Closed)
-                app.close();
+            if (e.type == Event::Closed) app.close();
 
-            if( (e.type == Event::MouseButtonPressed && e.mouseButton.button == Mouse::Right) && (grid.isInBounds(app)) ) {
-                //Just some tests
-
-                if (click == 0) {
-                    click = 1;
-
-                    if (grid.isSelectedGem(app) ){
-                        cout << "\nThe first gem was selected! " << endl;
-                    }
-
-                }
-                else if (click == 1) {
-                    if (grid.isSelectedGem(app)) {
-                        cout << "\nThe second gem was selected! " << endl;
-                    }
-                    click = 0;
-                }
+            if( (e.type == Event::MouseButtonPressed && e.mouseButton.button == Mouse::Right) && grid.isInBounds(app) ){
+                grid.prepareSwap(app);
             }
-
-
         }
-        
+
+        grid.updateSwap(dt);
+
         app.clear();
         app.draw(background);
-
-        //gema.initialDraw(app, gems);
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -72,6 +59,7 @@ int main()
 
         app.display();
     }
+
 
     return 0;
 }

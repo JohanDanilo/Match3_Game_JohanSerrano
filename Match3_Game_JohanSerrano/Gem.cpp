@@ -2,10 +2,15 @@
 
 Gem::Gem()
 {
-	boardPosition = offset;
+	//boardPosition = offset;
 	x = y = 0.0;
 	colum = row = kind = 0;
 	alpha = 255;
+}
+
+Sprite& Gem::getSprite()
+{
+	return copySprite;
 }
 
 Gem::Gem(int aKind, int aRow, int aCol)
@@ -16,20 +21,19 @@ Gem::Gem(int aKind, int aRow, int aCol)
 	x = colum * TILE_SIZE;
 	y = row * TILE_SIZE;
 	alpha = 255;
+	copySprite.setPosition(x + offset.x, y + offset.y);
 }
 
 Gem::~Gem()
 {
 }
 
-void Gem::initialDraw(RenderWindow& window, Texture& texture) //getSprite(texture).setPosition(x + offset.x, y + offset.y);
+void Gem::initialDraw(RenderWindow& window, Texture& texture)
 {	
-	Sprite gemSprite;
-	gemSprite.setTexture(texture);
-	gemSprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
-	gemSprite.setPosition(x + offset.x, y + offset.y);
-	gemSprite.setColor(Color(255, 255, 255, alpha));
-	window.draw(gemSprite);
+	copySprite.setTexture(texture);
+	copySprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+	copySprite.setColor(Color(255, 255, 255, alpha));
+	window.draw(copySprite);
 }
 
 
@@ -63,21 +67,33 @@ float& Gem::getY()
 	return y;
 }
 
-void Gem::actualizarPosicionConClick(RenderWindow& ventana, Event evento) {
-	// Obtener las coordenadas del mouse en la ventana
-	Vector2i posicionMouse(evento.mouseButton.x, evento.mouseButton.y);
-
-	// Convertir coordenadas de ventana a mundo
-	Vector2f worldPos = ventana.mapPixelToCoords(posicionMouse);
-
-	// Actualizar la posición lógica de la gema
-	worldPos.x -= TILE_SIZE / 2; 
-	worldPos.y -= TILE_SIZE / 2;
-
-	//gemSprite.setPosition(x, y);
+void Gem::setDestination(const Vector2f& d) {
+	destiny = d;
+	isMoving = true;
 }
 
-Vector2f Gem::getBoardPosition()
-{
-	return boardPosition;
+bool Gem::moveGem(float dt) {
+	if (!isMoving) return true;
+
+	float velocidad = 400.f;
+	Vector2f currentPos = copySprite.getPosition();
+	Vector2f direction = destiny - currentPos;
+	float distance = sqrt(direction.x * direction.x + direction.y * direction.y);
+
+	if (distance > 1.0f) {
+		direction /= distance;
+		copySprite.move(direction * velocidad * dt);
+		return false;
+	}
+	else {
+		copySprite.setPosition(destiny);
+		isMoving = false;
+
+		// Recalcular coordenadas visuales
+		x = (colum * TILE_SIZE);
+		y = (row * TILE_SIZE);
+
+		return true;
+	}
+
 }

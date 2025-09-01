@@ -14,10 +14,16 @@ private:
 	int colum, row;   // Posición lógica en la matriz
 	int alpha;      // Transparencia (255 visible, 0 invisible)
 	int kind;
-	Vector2f boardPosition;
+	Vector2f destiny;
+	bool isMoving = false;
 	
 public:
 	Gem();
+
+	Sprite copySprite;
+
+	Sprite& getSprite();
+
 	Gem(int aKind, int aRow, int aCol);
 	~Gem();
 
@@ -32,9 +38,11 @@ public:
 	float& getX();
 	float& getY();
 
-	// Método para actualizar posición con click derecho
-	void actualizarPosicionConClick(RenderWindow& ventana, Event evento);
-	Vector2f getBoardPosition();
+	void setDestination(const Vector2f& d);
+
+	bool moveGem(float dt);
+
+	//Vector2f getBoardPosition();
 
 };
 

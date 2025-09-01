@@ -1,5 +1,14 @@
 #include "Board.h"
 
+Vector2f Board::getGridPosition(RenderWindow& window)
+{
+    Vector2i position;
+    position = Mouse::getPosition(window);
+    int mouseX = position.x, mouseY = position.y;
+    Vector2f worldPosition = window.mapPixelToCoords(position);
+    return worldPosition;
+}
+
 void Board::initialize()
 {
 	srand(static_cast<unsigned int>(time(0)));
@@ -12,6 +21,15 @@ void Board::initialize()
 
         }
     }
+}
+
+void Board::draw(RenderWindow& window)
+{
+    /*for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            getGem(i, j).initialDraw(window, gems);
+        }
+    }*/
 }
 
 bool Board::areAdjacent(int r1, int c1, int r2, int c2) const {
@@ -35,8 +53,39 @@ bool Board::areAdjacent( Gem& a, Gem& b) const {
     return areAdjacent(a.getRow(), a.getColum(), b.getRow(), b.getColum());
 }
 
-void Board::moveGemsIfHasMatch(int aRow, int aColum, int anotherRow, int anotherColum)
+void Board::moveGems(RenderWindow& window, float& deltaTime, int click)
 {
+
+    Vector2f origin, destiny;
+
+    // Here we get the gems a & b by accesing the grid positions like (0, 0)
+
+    int row1 = 0, row2 = 0, colum1 = 0, colum2 = 0;
+    
+    Gem gem1;
+    if (isSelectedGem(window) && click == 0) {
+        Vector2i position;
+        position = Mouse::getPosition(window);
+        int mouseX = position.x, mouseY = position.y;
+        colum1 = (mouseX - offset.x) / TILE_SIZE;
+        row1 = (mouseY - offset.y) / TILE_SIZE;
+        gem1 = getGem(row1, colum1);
+        origin = Vector2f(gem1.getX(), gem1.getY() );// Posición actual
+    }
+
+    Gem gem2;
+    if (isSelectedGem(window) && click == 1) {
+        Vector2i position2 = Mouse::getPosition(window);
+        int mouseX = position2.x, mouseY = position2.y;
+        colum2 = (mouseX - offset.x) / TILE_SIZE;
+        row2 = (mouseY - offset.y) / TILE_SIZE;
+        gem2 = getGem(row2, colum2);
+        destiny = Vector2f(gem2.getX(), gem2.getY());// Posición actual
+    }
+
+    getGem(row1, colum1).moveGem(deltaTime);
+    getGem(row2, colum2).moveGem(deltaTime);
+
 }
 
 
@@ -57,7 +106,7 @@ bool Board::isInBounds(RenderWindow& window)
     int col = (mouseX - offset.x) / TILE_SIZE;
     int row = (mouseY - offset.y) / TILE_SIZE;
 
-    if (col < 0 || col >= BOARD_WIDTH || row < 0 || row >= BOARD_HEIGTH) {
+    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) {
         return false;
     }
     return true;
@@ -70,7 +119,7 @@ bool Board::isSelectedGem(RenderWindow& window)
     position = Mouse::getPosition(window);
     int mouseX = position.x, mouseY = position.y;
 
-    Vector2f worldPosition = window.mapPixelToCoords(position);
+    Vector2f worldPosition = getGridPosition(window);
 
     int col = (mouseX - offset.x) / TILE_SIZE;
     int row = (mouseY - offset.y) / TILE_SIZE;
@@ -84,3 +133,61 @@ bool Board::isSelectedGem(RenderWindow& window)
     }
     return false;
 }
+
+void Board::prepareSwap(RenderWindow& window) {
+    if (!firstGem) {
+        // Primer click
+        Vector2i pos = Mouse::getPosition(window);
+        int col = (pos.x - offset.x) / TILE_SIZE;
+        int row = (pos.y - offset.y) / TILE_SIZE;
+        firstGem = &grid[row][col];
+    }
+    else {
+        // Segundo click
+        Vector2i pos = Mouse::getPosition(window);
+        int col = (pos.x - offset.x) / TILE_SIZE;
+        int row = (pos.y - offset.y) / TILE_SIZE;
+        secondGem = &grid[row][col];
+
+        // Guardar posiciones originales
+        Vector2f pos1 = firstGem->getSprite().getPosition();
+        Vector2f pos2 = secondGem->getSprite().getPosition();
+
+        // Asignar destinos cruzados
+        firstGem->setDestination(pos2);
+        secondGem->setDestination(pos1);
+
+        isSwapping = true;
+    }
+}
+
+void Board::updateSwap(float dt) {
+    if (!isSwapping) return;
+
+    bool done1 = firstGem->moveGem(dt);
+    bool done2 = secondGem->moveGem(dt);
+
+    if (done1 && done2) {
+        int r1 = firstGem->getRow();
+        int c1 = firstGem->getColum();
+        int r2 = secondGem->getRow();
+        int c2 = secondGem->getColum();
+
+        // Intercambiar en la matriz grid
+        swap(grid[r1][c1], grid[r2][c2]);
+
+        // Ajustar filas/columnas de cada gema
+        grid[r1][c1].getRow() = r1;
+        grid[r1][c1].getColum() = c1;
+
+        grid[r2][c2].getRow() = r2;
+        grid[r2][c2].getColum() = c2;
+
+        // Reset
+        firstGem = nullptr;
+        secondGem = nullptr;
+        isSwapping = false;
+    }
+
+}
+
