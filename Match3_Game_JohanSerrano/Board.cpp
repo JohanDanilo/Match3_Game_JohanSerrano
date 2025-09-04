@@ -21,74 +21,39 @@ void Board::initialize()
 
         }
     }
+
+    saveTexture();
 }
+
+void Board::saveTexture()
+{
+    Texture gems;
+    gems.loadFromFile("assets/spritesheet.png");
+    
+    texture = gems;
+}
+
 
 void Board::draw(RenderWindow& window)
 {
-    /*for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < 8; j++) {
-            getGem(i, j).initialDraw(window, gems);
+            getGem(i, j).initialDraw(window, texture);
         }
-    }*/
-}
-
-bool Board::areAdjacent(int r1, int c1, int r2, int c2) const {
-    
-    if (r1 < 0 || r1 >= ROWS || r2 < 0 || r2 >= ROWS ||
-        c1 < 0 || c1 >= COLS || c2 < 0 || c2 >= COLS) {
-        return false;
     }
-
-    
-    if (r1 == r2 && c1 == c2) return false;
-
-    int dr = abs(r1 - r2);
-    int dc = abs(c1 - c2);
-
-    
-    return (dr == 1 && dc == 0) || (dr == 0 && dc == 1);
 }
 
-bool Board::areAdjacent( Gem& a, Gem& b) const {
-    return areAdjacent(a.getRow(), a.getColum(), b.getRow(), b.getColum());
-}
+bool Board::areAdjacent() const {
 
-void Board::moveGems(RenderWindow& window, float& deltaTime, int click)
-{
-
-    Vector2f origin, destiny;
-
-    // Here we get the gems a & b by accesing the grid positions like (0, 0)
-
-    int row1 = 0, row2 = 0, colum1 = 0, colum2 = 0;
+    int row1 = firstGem->getRow();
+    int col1 = firstGem->getColum();
+    int row2 = secondGem->getRow();
+    int col2 = secondGem->getColum();
     
-    Gem gem1;
-    if (isSelectedGem(window) && click == 0) {
-        Vector2i position;
-        position = Mouse::getPosition(window);
-        int mouseX = position.x, mouseY = position.y;
-        colum1 = (mouseX - offset.x) / TILE_SIZE;
-        row1 = (mouseY - offset.y) / TILE_SIZE;
-        gem1 = getGem(row1, colum1);
-        origin = Vector2f(gem1.getX(), gem1.getY() );// Posición actual
-    }
-
-    Gem gem2;
-    if (isSelectedGem(window) && click == 1) {
-        Vector2i position2 = Mouse::getPosition(window);
-        int mouseX = position2.x, mouseY = position2.y;
-        colum2 = (mouseX - offset.x) / TILE_SIZE;
-        row2 = (mouseY - offset.y) / TILE_SIZE;
-        gem2 = getGem(row2, colum2);
-        destiny = Vector2f(gem2.getX(), gem2.getY());// Posición actual
-    }
-
-    getGem(row1, colum1).moveGem(deltaTime);
-    getGem(row2, colum2).moveGem(deltaTime);
-
+    if (row1 == row2 && col1 == col2) return false;
+    
+    return (abs(row1 - row2) + abs(col1 - col2) == 1);
 }
-
-
 
 Gem& Board::getGem(int x, int y)
 {
@@ -112,52 +77,46 @@ bool Board::isInBounds(RenderWindow& window)
     return true;
 }
 
-bool Board::isSelectedGem(RenderWindow& window)
-{
-
-    Vector2i position;
-    position = Mouse::getPosition(window);
-    int mouseX = position.x, mouseY = position.y;
-
-    Vector2f worldPosition = getGridPosition(window);
-
-    int col = (mouseX - offset.x) / TILE_SIZE;
-    int row = (mouseY - offset.y) / TILE_SIZE;
-
-    float gemXAxis = getGem(row, col).getX();
-    float gemYAxis = getGem(row, col).getY();
-
-    if ((gemXAxis + offset.x <= worldPosition.x && worldPosition.x <= gemXAxis + offset.x + TILE_SIZE)
-        && (gemYAxis + offset.y <= worldPosition.y && worldPosition.y <= gemYAxis + offset.y + TILE_SIZE)) {
-        return true;
-    }
-    return false;
-}
-
 void Board::prepareSwap(RenderWindow& window) {
-    if (!firstGem) {
+    
+    int row1 = 0, col1 = 0, row2 = 0, col2 = 0;
+
+    if (!firstGem && isInBounds(window)) {
         // Primer click
         Vector2i pos = Mouse::getPosition(window);
-        int col = (pos.x - offset.x) / TILE_SIZE;
-        int row = (pos.y - offset.y) / TILE_SIZE;
-        firstGem = &grid[row][col];
+        col1 = (pos.x - offset.x) / TILE_SIZE;
+        row1 = (pos.y - offset.y) / TILE_SIZE;
+        firstGem = &grid[row1][col1];
+        cout << "First gem selected in grid: " << firstGem->getRow() << ", " << firstGem->getColum() <<endl;
     }
-    else {
+    else if (isInBounds(window)){
         // Segundo click
         Vector2i pos = Mouse::getPosition(window);
-        int col = (pos.x - offset.x) / TILE_SIZE;
-        int row = (pos.y - offset.y) / TILE_SIZE;
-        secondGem = &grid[row][col];
+        col2 = (pos.x - offset.x) / TILE_SIZE;
+        row2 = (pos.y - offset.y) / TILE_SIZE;
 
-        // Guardar posiciones originales
-        Vector2f pos1 = firstGem->getSprite().getPosition();
-        Vector2f pos2 = secondGem->getSprite().getPosition();
+        secondGem = &grid[row2][col2];
+        cout << "Second gem selected in grid: " << secondGem->getRow() << ", " << secondGem->getColum() << endl;
 
-        // Asignar destinos cruzados
-        firstGem->setDestination(pos2);
-        secondGem->setDestination(pos1);
+        if ( areAdjacent() ) {
 
-        isSwapping = true;
+            Vector2f pos1 = firstGem->getSprite().getPosition();
+            Vector2f pos2 = secondGem->getSprite().getPosition();
+
+            // Asignar destinos cruzados
+            firstGem->setDestination(pos2);
+            secondGem->setDestination(pos1);
+
+            cout << "And they're adjacent, so they have to move" << endl <<endl;
+
+            isSwapping = true;
+        }
+        else {
+            // Si no son adyacentes, cancelar selección
+            firstGem = nullptr;
+            secondGem = nullptr;
+            cout << "And they're not adjacent, so they cant move" << endl << endl;
+        }
     }
 }
 
@@ -177,11 +136,8 @@ void Board::updateSwap(float dt) {
         swap(grid[r1][c1], grid[r2][c2]);
 
         // Ajustar filas/columnas de cada gema
-        grid[r1][c1].getRow() = r1;
-        grid[r1][c1].getColum() = c1;
-
-        grid[r2][c2].getRow() = r2;
-        grid[r2][c2].getColum() = c2;
+        grid[r1][c1].setGridPositions(r1, c1);
+        grid[r2][c2].setGridPositions(r2, c2);
 
         // Reset
         firstGem = nullptr;

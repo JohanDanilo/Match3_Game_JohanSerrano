@@ -3,6 +3,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 using namespace sf;
@@ -10,8 +11,8 @@ using namespace sf;
 const int ROWS = 8;
 const int COLS = 8;
 
-const int BOARD_WIDTH = TILE_SIZE * ROWS;
-const int BOARD_HEIGTH = TILE_SIZE * COLS;
+const int BOARD_WIDTH = ROWS * GEM_WIDTH;
+const int BOARD_HEIGTH = COLS * GEM_HEIGHT;
 
 class Board
 {
@@ -25,23 +26,21 @@ private:
 
 	Vector2f getGridPosition(RenderWindow& window);
 
+	Texture texture;
+
 public:
 
 	void initialize();
 
+	void saveTexture();
+
 	void draw(RenderWindow& window);
 
-	bool areAdjacent(int aRow, int aColum, int anotherRow, int anotherColum) const;
-
-	bool areAdjacent(Gem& a, Gem& b) const;
-
-	void moveGems(RenderWindow& window, float& deltaTime, int click);
+	bool areAdjacent() const;
 
 	Gem& getGem(int x, int y);
 
 	bool isInBounds(RenderWindow& window);
-
-	bool isSelectedGem(RenderWindow& window);
 
 	void prepareSwap(RenderWindow& window);
 

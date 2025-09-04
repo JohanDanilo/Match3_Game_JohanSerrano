@@ -18,17 +18,17 @@ Gem::Gem(int aKind, int aRow, int aCol)
 	kind = aKind;
 	row = aRow;
 	colum = aCol;
-	x = colum * TILE_SIZE;
-	y = row * TILE_SIZE;
+	x = (colum * TILE_SIZE)+ offset.x;
+	y = (row * TILE_SIZE)+ offset.y;
 	alpha = 255;
-	copySprite.setPosition(x + offset.x, y + offset.y);
+	copySprite.setPosition(x , y );
 }
 
 Gem::~Gem()
 {
 }
 
-void Gem::initialDraw(RenderWindow& window, Texture& texture)
+void Gem::initialDraw(RenderWindow& window, Texture texture)
 {	
 	copySprite.setTexture(texture);
 	copySprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
@@ -42,27 +42,33 @@ void Gem::setKind(int aKind)
 	kind = aKind;
 }
 
+void Gem::setGridPositions(int aRow, int aColum)
+{
+	row = aRow;
+	colum = aColum;
+}
+
 int Gem::getKind()
 {
 	return kind;
 }
 
-int& Gem::getRow()
+int Gem::getRow()
 {
 	return row;
 }
 
-int& Gem::getColum()
+int Gem::getColum()
 {
 	return colum;
 }
 
-float& Gem::getX()
+float Gem::getX()
 {
 	return x;
 }
 
-float& Gem::getY()
+float Gem::getY()
 {
 	return y;
 }
@@ -86,10 +92,10 @@ bool Gem::moveGem(float dt) {
 		return false;
 	}
 	else {
-		copySprite.setPosition(destiny);
+		
 		isMoving = false;
 
-		// Recalcular coordenadas visuales
+		
 		x = (colum * TILE_SIZE);
 		y = (row * TILE_SIZE);
 

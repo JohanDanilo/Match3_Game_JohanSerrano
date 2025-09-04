@@ -23,9 +23,6 @@ int main()
 
     Vector2i position1, position2;
 
-    Texture gems;
-    gems.loadFromFile("assets/spritesheet.png");
-
     //Gem gema(1, 8, 0);
 
     bool isStarted = true;
@@ -51,11 +48,7 @@ int main()
         app.clear();
         app.draw(background);
 
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                grid.getGem(i, j).initialDraw(app, gems);
-            }
-        }
+        grid.draw(app);
 
         app.display();
     }

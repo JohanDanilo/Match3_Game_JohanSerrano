@@ -10,9 +10,9 @@ const Vector2f offset(171, 70);
 class Gem
 {
 private:
-	float x, y;       // Posición visual (en píxeles)
-	int colum, row;   // Posición lógica en la matriz
-	int alpha;      // Transparencia (255 visible, 0 invisible)
+	float x, y;
+	int colum, row;
+	int alpha;  
 	int kind;
 	Vector2f destiny;
 	bool isMoving = false;
@@ -27,22 +27,24 @@ public:
 	Gem(int aKind, int aRow, int aCol);
 	~Gem();
 
-	void initialDraw(RenderWindow& window,Texture& texture);
+	void initialDraw(RenderWindow& window,Texture texture);
 	
 	void setKind(int aType);
+
+	void setGridPositions(int aRow, int aColum);
+
+
 	int getKind();
 
-	int& getRow();
-	int& getColum();
+	int getRow();
+	int getColum();
 
-	float& getX();
-	float& getY();
+	float getX();
+	float getY();
 
 	void setDestination(const Vector2f& d);
 
 	bool moveGem(float dt);
-
-	//Vector2f getBoardPosition();
 
 };
 
