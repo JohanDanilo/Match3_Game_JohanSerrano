@@ -2,7 +2,6 @@
 
 Gem::Gem()
 {
-	//boardPosition = offset;
 	x = y = 0.0;
 	colum = row = kind = 0;
 	alpha = 255;
@@ -95,11 +94,31 @@ bool Gem::moveGem(float dt) {
 		
 		isMoving = false;
 
-		
 		x = (colum * TILE_SIZE);
 		y = (row * TILE_SIZE);
 
 		return true;
 	}
 
+}
+
+bool Gem::dissapear() {
+	if (!isDisappearing)
+		return false;  
+
+	if (alpha > 10) {
+		alpha -= 3;   
+		return true;  
+	}
+	else {
+		alpha = 0;     
+		isDisappearing = false; 
+		return false; 
+	}
+
+}
+
+bool Gem::getDisappearingState()
+{
+	return isDisappearing;
 }

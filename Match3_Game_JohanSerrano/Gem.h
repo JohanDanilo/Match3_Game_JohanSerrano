@@ -16,6 +16,7 @@ private:
 	int kind;
 	Vector2f destiny;
 	bool isMoving = false;
+	bool isDisappearing = false;
 	
 public:
 	Gem();
@@ -45,6 +46,13 @@ public:
 	void setDestination(const Vector2f& d);
 
 	bool moveGem(float dt);
+
+	bool dissapear();
+
+	bool getDisappearingState();
+
+	void startDisappearing() { isDisappearing = true; }
+
 
 };
 

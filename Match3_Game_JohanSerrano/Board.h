@@ -19,9 +19,14 @@ class Board
 private:
 	
 	Gem grid[ROWS][COLS];
+	bool matches[ROWS][COLS] = { false };
 
 	Gem* firstGem = nullptr;
 	Gem* secondGem = nullptr;
+
+	Vector2f originalPos1;
+	Vector2f originalPos2;
+
 	bool isSwapping = false;
 
 	Vector2f getGridPosition(RenderWindow& window);
@@ -46,6 +51,13 @@ public:
 
 	void updateSwap(float dt);
 
+	void findMatches();
+
+	bool removeMatches();
+
+	void update(float dt);
+
+	bool checkLineMatch(int row, int col);
 
 };
 

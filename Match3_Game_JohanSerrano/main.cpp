@@ -32,7 +32,7 @@ int main()
 
     while (app.isOpen()) {
         float dt = clock.restart().asSeconds();
-
+        
         Event e;
 
         while (app.pollEvent(e)) {
@@ -43,7 +43,7 @@ int main()
             }
         }
 
-        grid.updateSwap(dt);
+        grid.update(dt);
 
         app.clear();
         app.draw(background);
