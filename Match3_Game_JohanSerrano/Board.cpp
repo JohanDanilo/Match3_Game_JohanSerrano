@@ -1,10 +1,8 @@
 #include "Board.h"
 
-Vector2f Board::getGridPosition(RenderWindow& window)
+Vector2f Board::getWindowPosition(RenderWindow& window)
 {
-    Vector2i position;
-    position = Mouse::getPosition(window);
-    int mouseX = position.x, mouseY = position.y;
+    Vector2i position = Mouse::getPosition(window);
     Vector2f worldPosition = window.mapPixelToCoords(position);
     return worldPosition;
 }
@@ -12,26 +10,24 @@ Vector2f Board::getGridPosition(RenderWindow& window)
 void Board::initialize()
 {
 	srand(static_cast<unsigned int>(time(0)));
-    
+
+    loadTexture();
+
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
 
             int kind = rand() % 5, row = i, col = j;
             grid[i][j] = Gem(kind, row, col);
-
+            grid[i][j].setSprite(texture);
         }
     }
 
-    saveTexture();
-
 }
 
-void Board::saveTexture()
+void Board::loadTexture()
 {
-    Texture gems;
-    gems.loadFromFile("assets/spritesheet.png");
-    
-    texture = gems;
+    texture.loadFromFile("assets/spritesheet.png");
+    return;
 }
 
 
@@ -39,7 +35,7 @@ void Board::draw(RenderWindow& window)
 {
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < 8; j++) {
-            getGem(i, j).initialDraw(window, texture);
+            grid[i][j].draw(window);
         }
     }
 }
@@ -56,21 +52,12 @@ bool Board::areAdjacent() const {
     return (abs(row1 - row2) + abs(col1 - col2) == 1);
 }
 
-Gem& Board::getGem(int x, int y)
-{
-    return grid[x][y];
-}
-
 bool Board::isInBounds(RenderWindow& window)
 {
-    Vector2i position;
-    position = Mouse::getPosition(window);
-    int mouseX = position.x, mouseY = position.y;
 
-    Vector2f worldPosition = window.mapPixelToCoords(position);
-
-    int col = (mouseX - offset.x) / TILE_SIZE;
-    int row = (mouseY - offset.y) / TILE_SIZE;
+    Vector2f position = getWindowPosition(window);
+    float col = (position.x - offset.x) / TILE_SIZE;
+    float row = (position.y - offset.y) / TILE_SIZE;
 
     if (col < 0 || col >= COLS || row < 0 || row >= ROWS) {
         return false;
@@ -82,25 +69,29 @@ void Board::prepareSwap(RenderWindow& window) {
     
     int row1 = 0, col1 = 0, row2 = 0, col2 = 0;
 
-    if (!firstGem && isInBounds(window)) {
+    Vector2f position;
+
+    if (!firstGem && isInBounds(window) && moves >= 1) {
         // Primer click
-        Vector2i pos = Mouse::getPosition(window);
-        col1 = (pos.x - offset.x) / TILE_SIZE;
-        row1 = (pos.y - offset.y) / TILE_SIZE;
+        
+        position = getWindowPosition(window);
+        col1 = static_cast<int>( (position.x - offset.x) / TILE_SIZE );
+        row1 = static_cast<int>((position.y - offset.y) / TILE_SIZE);
         firstGem = &grid[row1][col1];
         cout << "First gem selected in grid: " << firstGem->getRow() << ", " << firstGem->getColum() <<endl;
     }
-    else if (isInBounds(window)){
+    else if (isInBounds(window) && moves >= 1){
         // Segundo click
-        Vector2i pos = Mouse::getPosition(window);
-        col2 = (pos.x - offset.x) / TILE_SIZE;
-        row2 = (pos.y - offset.y) / TILE_SIZE;
+        
+        position = getWindowPosition(window);
+        col2 = static_cast<int>((position.x - offset.x) / TILE_SIZE);
+        row2 = static_cast<int>((position.y - offset.y) / TILE_SIZE);
 
         secondGem = &grid[row2][col2];
         cout << "Second gem selected in grid: " << secondGem->getRow() << ", " << secondGem->getColum() << endl;
 
         if ( areAdjacent() ) {
-
+            moves--;
             originalPos1 = firstGem->getSprite().getPosition();
             originalPos2 = secondGem->getSprite().getPosition();
 
@@ -150,15 +141,20 @@ void Board::updateSwap(float dt) {
             secondGem->setDestination(originalPos2);
 
             isSwapping = true;
+            moves++;
             cout << "Swap reverted: no match found" << endl;
         }
         else {
             
-            for (int i = 0; i < ROWS; i++)
-                for (int j = 0; j < COLS; j++)
-                    if (matches[i][j])
+            for (int i = 0; i < ROWS; i++) {
+                for (int j = 0; j < COLS; j++) {
+                    if (matches[i][j]) {
                         grid[i][j].startDisappearing();
+                    }
+                    
+                }
 
+            }
             
         }
 
@@ -278,10 +274,20 @@ void Board::update(float dt) {
                 }
 
                 if (grid[i][j].getDisappearingState()) {
-                    if (grid[i][j].dissapear())
+                    if (grid[i][j].dissapear()) {
+                        
                         anyDisappearing = true;
+                    }
+                        
                 }
             }
+        }
+
+        // Si ya no hay gemas desapareciendo: limpiar, gravedad y refill
+        if (!anyDisappearing) {
+            clearMatches();
+            applyGravity();
+            refill();
         }
 
         // Aquí más adelante va "gravedad" y "refill"
@@ -323,3 +329,64 @@ bool Board::checkLineMatch(int row, int col) {
     return false;
 }
 
+void Board::clearMatches() {
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            // Si la gema ya terminó de desaparecer : marcar como vacía
+            if (grid[r][c].isEmpty()) {
+                score += 10;
+                grid[r][c].setKind(-1);
+            }
+        }
+    }
+}
+
+void Board::applyGravity() {
+    for (int c = 0; c < COLS; c++) {
+        int writeRow = ROWS - 1; // posición donde debe caer la próxima gema
+        for (int r = ROWS - 1; r >= 0; r--) {
+            if (grid[r][c].getKind() != -1) {
+                if (r != writeRow) {
+                    // Mover gema hacia abajo
+                    grid[writeRow][c] = grid[r][c];
+                    grid[writeRow][c].setGridPositions(writeRow, c);
+
+                    Vector2f dest(c * TILE_SIZE + offset.x, writeRow * TILE_SIZE + offset.y);
+                    grid[writeRow][c].setDestination(dest);
+
+                    // Marcar la celda original como vacía
+                    grid[r][c].setKind(-1);
+                }
+                writeRow--;
+            }
+        }
+    }
+}
+
+void Board::refill() {
+    for (int c = 0; c < COLS; c++) {
+        for (int r = 0; r < ROWS; r++) {
+            if (grid[r][c].getKind() == -1) {
+                int kind = rand() % 5;
+                grid[r][c] = Gem(kind, r, c);
+                grid[r][c].setSprite(texture);
+
+                // Aparece por encima del tablero
+                grid[r][c].getSprite().setPosition(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
+
+                // Destino: su celda real
+                grid[r][c].setDestination(Vector2f(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y));
+            }
+        }
+    }
+}
+
+int Board::getScore()
+{
+    return score;
+}
+
+int Board::getMoves()
+{
+    return moves;
+}

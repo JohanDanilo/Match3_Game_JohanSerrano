@@ -17,18 +17,20 @@ private:
 	Vector2f destiny;
 	bool isMoving = false;
 	bool isDisappearing = false;
+
+	Sprite sprite;
 	
 public:
 	Gem();
 
-	Sprite copySprite;
+	void setSprite(Texture& texture);
 
 	Sprite& getSprite();
 
 	Gem(int aKind, int aRow, int aCol);
 	~Gem();
 
-	void initialDraw(RenderWindow& window,Texture texture);
+	void draw(RenderWindow& window);
 	
 	void setKind(int aType);
 
@@ -51,8 +53,9 @@ public:
 
 	bool getDisappearingState();
 
-	void startDisappearing() { isDisappearing = true; }
+	void startDisappearing();
 
+	bool isEmpty();
 
 };
 

@@ -7,9 +7,15 @@ Gem::Gem()
 	alpha = 255;
 }
 
-Sprite& Gem::getSprite()
+void Gem::setSprite(Texture& texture)
 {
-	return copySprite;
+	sprite.setTexture(texture);
+	sprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+}
+
+Sprite& Gem::getSprite() 
+{
+	return sprite;
 }
 
 Gem::Gem(int aKind, int aRow, int aCol)
@@ -20,19 +26,17 @@ Gem::Gem(int aKind, int aRow, int aCol)
 	x = (colum * TILE_SIZE)+ offset.x;
 	y = (row * TILE_SIZE)+ offset.y;
 	alpha = 255;
-	copySprite.setPosition(x , y );
+	sprite.setPosition(x , y);
 }
 
 Gem::~Gem()
 {
 }
 
-void Gem::initialDraw(RenderWindow& window, Texture texture)
+void Gem::draw(RenderWindow& window)
 {	
-	copySprite.setTexture(texture);
-	copySprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
-	copySprite.setColor(Color(255, 255, 255, alpha));
-	window.draw(copySprite);
+	sprite.setColor(Color(255, 255, 255, alpha));
+	window.draw(sprite);
 }
 
 
@@ -81,13 +85,13 @@ bool Gem::moveGem(float dt) {
 	if (!isMoving) return true;
 
 	float velocidad = 400.f;
-	Vector2f currentPos = copySprite.getPosition();
+	Vector2f currentPos = sprite.getPosition();
 	Vector2f direction = destiny - currentPos;
 	float distance = sqrt(direction.x * direction.x + direction.y * direction.y);
 
 	if (distance > 1.0f) {
 		direction /= distance;
-		copySprite.move(direction * velocidad * dt);
+		sprite.move(direction * velocidad * dt);
 		return false;
 	}
 	else {
@@ -121,4 +125,14 @@ bool Gem::dissapear() {
 bool Gem::getDisappearingState()
 {
 	return isDisappearing;
+}
+
+void Gem::startDisappearing()
+{
+	isDisappearing = true;
+}
+
+bool Gem::isEmpty()
+{
+	return (alpha <= 0);
 }

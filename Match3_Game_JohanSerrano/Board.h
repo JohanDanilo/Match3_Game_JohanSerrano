@@ -29,21 +29,23 @@ private:
 
 	bool isSwapping = false;
 
-	Vector2f getGridPosition(RenderWindow& window);
+	Vector2f getWindowPosition(RenderWindow& window);
 
 	Texture texture;
+
+	int score = 0;
+
+	int moves = 20;
 
 public:
 
 	void initialize();
 
-	void saveTexture();
+	void loadTexture();
 
 	void draw(RenderWindow& window);
 
 	bool areAdjacent() const;
-
-	Gem& getGem(int x, int y);
 
 	bool isInBounds(RenderWindow& window);
 
@@ -58,6 +60,16 @@ public:
 	void update(float dt);
 
 	bool checkLineMatch(int row, int col);
+
+	void clearMatches();
+
+	void applyGravity();
+
+	void refill();
+
+	int getScore();
+
+	int getMoves();
 
 };
 
