@@ -11,7 +11,7 @@ class Gem
 {
 private:
 	float x, y;
-	int colum, row;
+	int column, row;
 	int alpha;  
 	int kind;
 	Vector2f destiny;
@@ -27,7 +27,7 @@ public:
 
 	Sprite& getSprite();
 
-	Gem(int aKind, int aRow, int aCol);
+	Gem(int aKind, int aRow, int aColumn);
 	~Gem();
 
 	void draw(RenderWindow& window);
@@ -58,5 +58,3 @@ public:
 	bool isEmpty();
 
 };
-
-

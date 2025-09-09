@@ -37,6 +37,8 @@ private:
 
 	int moves = 20;
 
+	bool stillMoving = false;
+
 public:
 
 	void initialize();
@@ -71,5 +73,10 @@ public:
 
 	int getMoves();
 
-};
+	void refillMoves();
 
+	void clearScore();
+
+	bool isResolving() const;
+
+};

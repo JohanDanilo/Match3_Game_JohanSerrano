@@ -3,7 +3,7 @@
 Gem::Gem()
 {
 	x = y = 0.0;
-	colum = row = kind = 0;
+	column = row = kind = 0;
 	alpha = 255;
 }
 
@@ -22,8 +22,8 @@ Gem::Gem(int aKind, int aRow, int aCol)
 {
 	kind = aKind;
 	row = aRow;
-	colum = aCol;
-	x = (colum * TILE_SIZE)+ offset.x;
+	column = aCol;
+	x = (column * TILE_SIZE)+ offset.x;
 	y = (row * TILE_SIZE)+ offset.y;
 	alpha = 255;
 	sprite.setPosition(x , y);
@@ -45,10 +45,10 @@ void Gem::setKind(int aKind)
 	kind = aKind;
 }
 
-void Gem::setGridPositions(int aRow, int aColum)
+void Gem::setGridPositions(int aRow, int aColumn)
 {
 	row = aRow;
-	colum = aColum;
+	column = aColumn;
 }
 
 int Gem::getKind()
@@ -63,7 +63,7 @@ int Gem::getRow()
 
 int Gem::getColum()
 {
-	return colum;
+	return column;
 }
 
 float Gem::getX()
@@ -98,8 +98,8 @@ bool Gem::moveGem(float dt) {
 		
 		isMoving = false;
 
-		x = (colum * TILE_SIZE);
-		y = (row * TILE_SIZE);
+		x = (column * TILE_SIZE) + offset.x;
+		y = (row * TILE_SIZE) + offset.y;
 
 		return true;
 	}

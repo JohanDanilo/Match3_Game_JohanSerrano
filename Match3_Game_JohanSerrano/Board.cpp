@@ -251,7 +251,7 @@ void Board::update(float dt) {
         return;
     }
 
-    bool stillMoving = false;
+    stillMoving = false;
 
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLS; j++) {
@@ -290,7 +290,7 @@ void Board::update(float dt) {
             refill();
         }
 
-        // Aquí más adelante va "gravedad" y "refill"
+        
     }
 
 }
@@ -390,3 +390,15 @@ int Board::getMoves()
 {
     return moves;
 }
+
+void Board::refillMoves()
+{
+    moves = 20;
+}
+
+void Board::clearScore()
+{
+    score = 0;
+}
+
+bool Board :: isResolving() const { return isSwapping || stillMoving; }
