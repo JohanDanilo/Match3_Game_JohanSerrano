@@ -61,7 +61,7 @@ bool playGame(Board& grid, Font& font, Sprite& background) {
         
         
 
-        if (grid.getMoves() <= 0 && !grid.isResolving()) {
+        if (grid.getMoves() <= 0 && !grid.isResolving() && !grid.isScoring()) {
             return true; // game over
         }
     }
@@ -102,7 +102,7 @@ int main() {
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed) window.close();
 
-            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Right) {
+            if (event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
                 if (startButtonArea.contains(mousePos)) {
                     startGame = true;
@@ -154,7 +154,7 @@ int main() {
                 while (overWindow.pollEvent(e)) {
                     if (e.type == Event::Closed) overWindow.close();
 
-                    if (e.type == Event::MouseButtonPressed && e.mouseButton.button == Mouse::Right) {
+                    if (e.type == Event::MouseButtonPressed) {
                         Vector2i mousePos = Mouse::getPosition(overWindow);
                         if (restartButtonArea.contains(mousePos)) {
                             restart = true;

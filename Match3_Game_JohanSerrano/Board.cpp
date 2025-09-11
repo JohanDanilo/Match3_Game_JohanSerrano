@@ -66,23 +66,19 @@ bool Board::isInBounds(RenderWindow& window)
 }
 
 void Board::prepareSwap(RenderWindow& window) {
-    
     int row1 = 0, col1 = 0, row2 = 0, col2 = 0;
-
     Vector2f position;
 
-    if (!firstGem && isInBounds(window) && moves >= 1) {
+    if (!firstGem && isInBounds(window)) {
         // Primer click
-        
         position = getWindowPosition(window);
-        col1 = static_cast<int>( (position.x - offset.x) / TILE_SIZE );
+        col1 = static_cast<int>((position.x - offset.x) / TILE_SIZE);
         row1 = static_cast<int>((position.y - offset.y) / TILE_SIZE);
         firstGem = &grid[row1][col1];
-        cout << "First gem selected in grid: " << firstGem->getRow() << ", " << firstGem->getColum() <<endl;
+        cout << "First gem selected in grid: " << firstGem->getRow() << ", " << firstGem->getColum() << endl;
     }
-    else if (isInBounds(window) && moves >= 1){
+    else if (isInBounds(window)) {
         // Segundo click
-        
         position = getWindowPosition(window);
         col2 = static_cast<int>((position.x - offset.x) / TILE_SIZE);
         row2 = static_cast<int>((position.y - offset.y) / TILE_SIZE);
@@ -90,27 +86,27 @@ void Board::prepareSwap(RenderWindow& window) {
         secondGem = &grid[row2][col2];
         cout << "Second gem selected in grid: " << secondGem->getRow() << ", " << secondGem->getColum() << endl;
 
-        if ( areAdjacent() ) {
-            moves--;
+        if (areAdjacent()) {
+            // NO restar moves aquí
             originalPos1 = firstGem->getSprite().getPosition();
             originalPos2 = secondGem->getSprite().getPosition();
 
-            
             firstGem->setDestination(originalPos2);
             secondGem->setDestination(originalPos1);
 
-            cout << "And they're adjacent, so they have to move" << endl <<endl;
-
+            isReverting = false;    // asegurar estado
             isSwapping = true;
+
+            cout << "And they're adjacent, so they have to move" << endl << endl;
         }
         else {
-            
             firstGem = nullptr;
             secondGem = nullptr;
             cout << "And they're not adjacent, so they cant move" << endl << endl;
         }
     }
 }
+
 
 void Board::updateSwap(float dt) {
     if (!isSwapping) return;
@@ -119,49 +115,77 @@ void Board::updateSwap(float dt) {
     bool done2 = secondGem->moveGem(dt);
 
     if (done1 && done2) {
+        // Si estábamos en la animación de revert y ya terminó:
+        if (isReverting) {
+            // revert terminado: limpiar y salir
+            isReverting = false;
+            isSwapping = false;
+            firstGem = nullptr;
+            secondGem = nullptr;
+            cout << "Revert animation finished" << endl;
+            return;
+        }
+
         int r1 = firstGem->getRow();
         int c1 = firstGem->getColum();
         int r2 = secondGem->getRow();
         int c2 = secondGem->getColum();
 
-        
+        // Intercambiar lógicamente las piezas (ahora sus sprites ya están en el lugar)
         swap(grid[r1][c1], grid[r2][c2]);
         grid[r1][c1].setGridPositions(r1, c1);
         grid[r2][c2].setGridPositions(r2, c2);
 
-        bool anyMatch = checkLineMatch(r1, c1) || checkLineMatch(r2, c2);
+        // Buscar matches resultantes del swap
+        findMatches();
+
+        bool anyMatch = false;
+        for (int i = 0; i < ROWS && !anyMatch; i++) {
+            for (int j = 0; j < COLS && !anyMatch; j++) {
+                if (matches[i][j]) anyMatch = true;
+            }
+        }
 
         if (!anyMatch) {
-            
+            // No match -> revertir visualmente (animación)
+            // restaurar lógica del grid para que el array represente el tablero visual
             swap(grid[r1][c1], grid[r2][c2]);
             grid[r1][c1].setGridPositions(r1, c1);
             grid[r2][c2].setGridPositions(r2, c2);
 
+            // animar de vuelta a sus posiciones originales
             firstGem->setDestination(originalPos1);
             secondGem->setDestination(originalPos2);
 
+            // Mantener punteros y dejar que la animación de revert continue en updateSwap
+            isReverting = true;
             isSwapping = true;
-            moves++;
-            cout << "Swap reverted: no match found" << endl;
+            cout << "Swap reverted: no match found (animating revert)" << endl;
+
+            // NO limpiar firstGem/secondGem aquí; los limpias cuando termine la animación de revert.
+            return;
         }
         else {
-            
+            // Hay match: iniciar desaparición en las celdas marcadas
             for (int i = 0; i < ROWS; i++) {
                 for (int j = 0; j < COLS; j++) {
                     if (matches[i][j]) {
                         grid[i][j].startDisappearing();
                     }
-                    
                 }
-
             }
-            
+
+            pendingScore = true;
+            scoreFromSwap = true;   // este match fue provocado por el jugador
+
+            // Liberamos punteros para que update() continúe con desaparición/gravedad/refill
+            firstGem = nullptr;
+            secondGem = nullptr;
+            isSwapping = false;
+
+            cout << "Match found -> pendingScore = true" << endl;
+            return;
         }
-
-        firstGem = nullptr;
-        secondGem = nullptr;
-        isSwapping = false;
-
     }
 }
 
@@ -263,37 +287,57 @@ void Board::update(float dt) {
 
     if (!stillMoving) {
 
+        // Detectar matches espontáneos (ej. cascada tras refill) y arrancar su desaparición.
         findMatches();
-
-        bool anyDisappearing = false;
         for (int i = 0; i < ROWS; i++) {
             for (int j = 0; j < COLS; j++) {
                 if (matches[i][j]) {
                     grid[i][j].startDisappearing();
                     matches[i][j] = false;
-                }
-
-                if (grid[i][j].getDisappearingState()) {
-                    if (grid[i][j].dissapear()) {
-                        
-                        anyDisappearing = true;
-                    }
-                        
+                    // Si se detecta un match aquí y no venía de un swap, también queremos contabilizarlo:
+                    pendingScore = true;
                 }
             }
         }
 
-        // Si ya no hay gemas desapareciendo: limpiar, gravedad y refill
-        if (!anyDisappearing) {
-            clearMatches();
-            applyGravity();
-            refill();
+        // Revisar si hay gemas actualmente desapareciendo (animación en curso)
+        bool anyDisappearing = false;
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLS; j++) {
+                if (grid[i][j].getDisappearingState()) {
+                    if (grid[i][j].dissapear()) {
+                        anyDisappearing = true;
+                    }
+                }
+            }
         }
 
-        
-    }
+        // Si no hay ninguna gema desapareciendo -> aplicar pipeline (clear -> gravedad -> refill)
+        if (!anyDisappearing) {
+            if (pendingScore) {
+                clearMatches();
+                pendingScore = false;
 
+                // Solo restar un movimiento si el match vino de un swap del jugador
+                if (scoreFromSwap) {
+                    moves--;
+                    scoreFromSwap = false;  // reseteamos
+                }
+
+                cout << "Score applied. New score: " << score << " Moves left: " << moves << endl;
+
+                applyGravity();
+                refill();
+                scoring = true;
+            }
+            else {
+                scoring = false;
+            }
+        }
+
+    }
 }
+
 
 bool Board::checkLineMatch(int row, int col) {
     int kind = grid[row][col].getKind();
@@ -334,6 +378,7 @@ void Board::clearMatches() {
         for (int c = 0; c < COLS; c++) {
             // Si la gema ya terminó de desaparecer : marcar como vacía
             if (grid[r][c].isEmpty()) {
+
                 score += 10;
                 grid[r][c].setKind(-1);
             }
@@ -401,4 +446,12 @@ void Board::clearScore()
     score = 0;
 }
 
-bool Board :: isResolving() const { return isSwapping || stillMoving; }
+bool Board::isResolving() const {
+    return isSwapping || stillMoving || pendingScore || isReverting;
+}
+
+
+bool Board::isScoring() const
+{
+    return scoring;
+}

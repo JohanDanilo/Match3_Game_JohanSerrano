@@ -11,9 +11,6 @@ using namespace sf;
 const int ROWS = 8;
 const int COLS = 8;
 
-const int BOARD_WIDTH = ROWS * GEM_WIDTH;
-const int BOARD_HEIGTH = COLS * GEM_HEIGHT;
-
 class Board
 {
 private:
@@ -38,6 +35,14 @@ private:
 	int moves = 20;
 
 	bool stillMoving = false;
+
+	bool scoring = false;
+
+	bool pendingScore = false;   // hay matches pendientes por contabilizar (esperando desaparición)
+	bool isReverting = false;    // estamos animando la reversión del swap (no limpiar punteros hasta que termine)
+	bool scoreFromSwap = false;  // indica si el match que generó pendingScore vino de un swap del jugador
+
+
 
 public:
 
@@ -79,4 +84,5 @@ public:
 
 	bool isResolving() const;
 
+	bool isScoring() const;
 };
