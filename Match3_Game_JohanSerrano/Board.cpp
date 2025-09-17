@@ -62,7 +62,7 @@ bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
     return true;
 }
 
-void Board::update(float dt, int& scoreGained, bool& moveConsumed) {
+void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     scoreGained = 0;
     moveConsumed = false;
     bool anyMatching = false;
@@ -84,8 +84,8 @@ void Board::update(float dt, int& scoreGained, bool& moveConsumed) {
         break;
 
     case Swapping: {
-        bool done1 = firstGem ? firstGem->moveGem(dt) : true;
-        bool done2 = secondGem ? secondGem->moveGem(dt) : true;
+        bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
+        bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
 
         if (done1 && done2) {
             swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
@@ -123,8 +123,8 @@ void Board::update(float dt, int& scoreGained, bool& moveConsumed) {
     }
 
     case Reverting: {
-        bool done1 = firstGem ? firstGem->moveGem(dt) : true;
-        bool done2 = secondGem ? secondGem->moveGem(dt) : true;
+        bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
+        bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
         if (done1 && done2) {
             firstGem = secondGem = nullptr;
             state = Idle;
@@ -138,7 +138,7 @@ void Board::update(float dt, int& scoreGained, bool& moveConsumed) {
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
                 if (grid[r][c].getDisappearingState()) {
-                    if (grid[r][c].dissapear(dt)) {
+                    if (grid[r][c].dissapear(deltaTime)) {
                         anyStillAnimating = true;
                     }
                 }
@@ -160,7 +160,7 @@ void Board::update(float dt, int& scoreGained, bool& moveConsumed) {
         bool stillMoving = false;
         for (int r = 0; r < ROWS; r++)
             for (int c = 0; c < COLS; c++)
-                if (!grid[r][c].moveGem(dt)) stillMoving = true;
+                if (!grid[r][c].moveGem(deltaTime)) stillMoving = true;
 
         if (!stillMoving) {
             findMatches();

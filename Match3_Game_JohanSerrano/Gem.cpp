@@ -85,8 +85,8 @@ void Gem::resetTransientState()
 }
 
 
-void Gem::setDestination(const Vector2f& d) {
-	destiny = d;
+void Gem::setDestination(const Vector2f& aDestination) {
+	destination = aDestination;
 	isMoving = true;
 }
 
@@ -95,7 +95,7 @@ bool Gem::moveGem(float deltaTime) {
 
 	const float speed = 400.f;
 	Vector2f currentPos = sprite.getPosition();
-	Vector2f direction = destiny - currentPos;
+	Vector2f direction = destination - currentPos;
 	float distance = sqrt(direction.x * direction.x + direction.y * direction.y);
 
 	if (distance > 1.0f) {
@@ -104,7 +104,7 @@ bool Gem::moveGem(float deltaTime) {
 		return false;
 	}
 	else {
-		sprite.setPosition(destiny);
+		sprite.setPosition(destination);
 		isMoving = false;
 
 		x = sprite.getPosition().x;
@@ -114,7 +114,6 @@ bool Gem::moveGem(float deltaTime) {
 	}
 
 }
-
 
 bool Gem::dissapear(float deltaTime) {
 	if (!isDisappearing)

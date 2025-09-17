@@ -47,7 +47,7 @@ public:
     bool areAdjacent(int row1, int col1, int row2, int col2) const;
     bool trySwapIndices(int row1, int col1, int row2, int col2);
 
-    void update(float dt, int& scoreGained, bool& moveConsumed);
+    void update(float deltaTime, int& scoreGained, bool& moveConsumed);
 
     int getState() const;
     Gem& getGem(int row, int col);

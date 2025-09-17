@@ -91,7 +91,7 @@ void Game::runGameLoop() {
     Clock clock;
 
     while (window.isOpen() && state == GameState::Playing) {
-        float dt = clock.restart().asSeconds();
+        float deltaTime = clock.restart().asSeconds();
 
         Event event;
         while (window.pollEvent(event)) {
@@ -107,7 +107,7 @@ void Game::runGameLoop() {
 
         int scoreGained = 0;
         bool moveConsumed = false;
-        board.update(dt, scoreGained, moveConsumed);
+        board.update(deltaTime, scoreGained, moveConsumed);
 
         if (scoreGained > 0) score += scoreGained;
         if (moveConsumed) moves--;
@@ -215,7 +215,6 @@ void Game::selectGem(RenderWindow& window) {
     }
 }
 
-
-
 void Game::refillMoves() { moves = 20; }
+
 void Game::clearScore() { score = 0; }

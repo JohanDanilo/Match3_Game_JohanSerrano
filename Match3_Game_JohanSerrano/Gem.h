@@ -14,7 +14,7 @@ private:
 	int column, row;
 	float alpha;  
 	int kind;
-	Vector2f destiny;
+	Vector2f destination;
 	bool isMoving = false;
 	bool isDisappearing = false;
 	Sprite sprite;
@@ -44,9 +44,9 @@ public:
 	float getX();
 	float getY();
 
-	void setDestination(const Vector2f& d);
+	void setDestination(const Vector2f& destination);
 
-	bool moveGem(float dt);
+	bool moveGem(float deltaTime);
 
 	bool dissapear(float deltaTime);
 
