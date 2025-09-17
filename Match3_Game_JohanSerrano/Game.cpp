@@ -10,7 +10,7 @@ void Game::init() {
 }
 
 void Game::loadResources() {
-    if (!font.loadFromFile("assets/fuente.ttf"))
+    if (!font.loadFromFile("assets/gameFont.ttf"))
         cerr << "Error loading font\n";
 
     if (!mainMenuTexture.loadFromFile("assets/mainMenu.png"))
