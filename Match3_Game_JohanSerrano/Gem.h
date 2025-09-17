@@ -3,8 +3,8 @@
 using namespace sf;
 
 const float TILE_SIZE = 58;
-const int GEM_WIDTH = 47;  // ancho de cada gema
-const int GEM_HEIGHT = 54; // alto real de la imagen
+const int GEM_WIDTH = 47;
+const int GEM_HEIGHT = 54;
 const Vector2f offset(171, 70);
 
 class Gem
@@ -12,12 +12,11 @@ class Gem
 private:
 	float x, y;
 	int column, row;
-	int alpha;  
+	float alpha;  
 	int kind;
 	Vector2f destiny;
 	bool isMoving = false;
 	bool isDisappearing = false;
-
 	Sprite sprite;
 	
 public:
@@ -49,12 +48,16 @@ public:
 
 	bool moveGem(float dt);
 
-	bool dissapear();
+	bool dissapear(float deltaTime);
 
 	bool getDisappearingState();
 
 	void startDisappearing();
 
 	bool isEmpty();
+
+	void resetTransientState();
+
+
 
 };

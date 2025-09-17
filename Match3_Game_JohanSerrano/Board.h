@@ -1,88 +1,55 @@
 #pragma once
 #include "Gem.h"
+#include <SFML/Graphics.hpp>
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
-#include <iostream>
 
-using namespace std;
 using namespace sf;
+using namespace std;
 
 const int ROWS = 8;
 const int COLS = 8;
 
-class Board
-{
+class Board {
 private:
-	
-	Gem grid[ROWS][COLS];
-	bool matches[ROWS][COLS] = { false };
+    enum BoardState { Idle, Swapping, Reverting, Scoring, Moving };
+    BoardState state;
 
-	Gem* firstGem = nullptr;
-	Gem* secondGem = nullptr;
+    Gem grid[ROWS][COLS];
+    bool matches[ROWS][COLS] = { false };
 
-	Vector2f originalPos1;
-	Vector2f originalPos2;
+    Gem* firstGem = nullptr;
+    Gem* secondGem = nullptr;
 
-	bool isSwapping = false;
+    int firstRow = -1, firstCol = -1;
+    int secondRow = -1, secondCol = -1;
 
-	Vector2f getWindowPosition(RenderWindow& window);
+    Texture texture;
 
-	Texture texture;
-
-	int score = 0;
-
-	int moves = 20;
-
-	bool stillMoving = false;
-
-	bool scoring = false;
-
-	bool pendingScore = false;   // hay matches pendientes por contabilizar (esperando desaparición)
-	bool isReverting = false;    // estamos animando la reversión del swap (no limpiar punteros hasta que termine)
-	bool scoreFromSwap = false;  // indica si el match que generó pendingScore vino de un swap del jugador
+    bool playerInitiatedMove = false;
+    Vector2f swapOrigPos1;
+    Vector2f swapOrigPos2;
 
 
+    void findMatches();
+    int clearMatches();
+    void applyGravity();
+    void refill();
 
 public:
+    Board();
 
-	void initialize();
+    void initialize();
+    void loadTexture();
+    void draw(RenderWindow& window);
 
-	void loadTexture();
+    bool areAdjacent(int row1, int col1, int row2, int col2) const;
+    bool trySwapIndices(int row1, int col1, int row2, int col2);
 
-	void draw(RenderWindow& window);
+    void update(float dt, int& scoreGained, bool& moveConsumed);
 
-	bool areAdjacent() const;
+    int getState() const;
+    Gem& getGem(int row, int col);
 
-	bool isInBounds(RenderWindow& window);
-
-	void prepareSwap(RenderWindow& window);
-
-	void updateSwap(float dt);
-
-	void findMatches();
-
-	bool removeMatches();
-
-	void update(float dt);
-
-	bool checkLineMatch(int row, int col);
-
-	void clearMatches();
-
-	void applyGravity();
-
-	void refill();
-
-	int getScore();
-
-	int getMoves();
-
-	void refillMoves();
-
-	void clearScore();
-
-	bool isResolving() const;
-
-	bool isScoring() const;
 };

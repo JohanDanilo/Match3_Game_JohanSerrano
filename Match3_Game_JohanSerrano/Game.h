@@ -1,24 +1,42 @@
 #pragma once
 
 #include "Board.h"
-#include <ctime>
-#include <cstdlib>
-#include <cmath>
+#include <SFML/Graphics.hpp>
 #include <iostream>
 
-class Game
-{
+using namespace sf;
+using namespace std;
+
+enum class GameState { MainMenu, Playing, GameOver };
+
+class Game {
 private:
+    Board board;
+    int score;
+    int moves;
+    GameState state;
+    bool running;
 
-	int score;
-	int moves;
-	RenderWindow window;
-	GameState state;
+    Texture mainMenuTexture, backgroundTexture, gameOverTexture;
+    Sprite mainMenuSprite, backgroundSprite, gameOverSprite;
+    Font font;
 
+    int firstSelectedRow = -1, firstSelectedCol = -1;
+
+    Vector2f getClickPosition(RenderWindow& window);
+    bool isClickInsideBoard(RenderWindow& window);
+
+    void runMainMenu();
+    void runGameLoop();
+    void runGameOver();
+    void selectGem(RenderWindow& window);
+    void refillMoves();
+    void clearScore();
 
 public:
-
-	Game();
-
+    Game();
+    void init();
+    void loadResources();
+    void run();
 };
 
