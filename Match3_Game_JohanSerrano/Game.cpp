@@ -10,18 +10,18 @@ void Game::init() {
 }
 
 void Game::loadResources() {
-    if (!font.loadFromFile("assets/gameFont.ttf"))
+    if (!font.loadFromFile("assets/gameFont.ttf"))// CHECK: Los if deben tener brackets
         cerr << "Error loading font\n";
 
-    if (!mainMenuTexture.loadFromFile("assets/mainMenu.png"))
+    if (!mainMenuTexture.loadFromFile("assets/mainMenu.png"))// CHECK: Los if deben tener brackets
         cerr << "Error loading mainMenu.png\n";
     else mainMenuSprite.setTexture(mainMenuTexture);
 
-    if (!backgroundTexture.loadFromFile("assets/background.png"))
+    if (!backgroundTexture.loadFromFile("assets/background.png"))// CHECK: Los if deben tener brackets
         cerr << "Error loading background.png\n";
     else backgroundSprite.setTexture(backgroundTexture);
 
-    if (!gameOverTexture.loadFromFile("assets/gameOver.png"))
+    if (!gameOverTexture.loadFromFile("assets/gameOver.png"))// CHECK: Los if deben tener brackets
         cerr << "Error loading gameOver.png\n";
     else gameOverSprite.setTexture(gameOverTexture);
 }
@@ -109,8 +109,8 @@ void Game::runGameLoop() {
         bool moveConsumed = false;
         board.update(deltaTime, scoreGained, moveConsumed);
 
-        if (scoreGained > 0) score += scoreGained;
-        if (moveConsumed) moves--;
+        if (scoreGained > 0) score += scoreGained;// CHECK: Los if deben tener brackets
+        if (moveConsumed) moves--;// CHECK: Los if deben tener brackets
 
         scoreText.setString("Score: " + to_string(score));
         movesText.setString("Moves: " + to_string(moves));
@@ -194,9 +194,9 @@ void Game::selectGem(RenderWindow& window) {
     Vector2f pos = getClickPosition(window);
     int col = static_cast<int>((pos.x - offset.x) / TILE_SIZE);
     int row = static_cast<int>((pos.y - offset.y) / TILE_SIZE);
-    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;// CHECK: Los if deben tener brackets
 
-    if (board.getState() != 0) return;
+    if (board.getState() != 0) return;// CHECK: Los if deben tener brackets
 
     if (firstSelectedRow == -1) {
         firstSelectedRow = row;

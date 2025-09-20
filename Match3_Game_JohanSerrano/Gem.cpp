@@ -91,7 +91,7 @@ void Gem::setDestination(const Vector2f& aDestination) {
 }
 
 bool Gem::moveGem(float deltaTime) {
-	if (!isMoving) return true;
+	if (!isMoving) return true;// CHECK: Los if deben tener brackets
 
 	const float speed = 400.f;
 	Vector2f currentPos = sprite.getPosition();
@@ -116,7 +116,7 @@ bool Gem::moveGem(float deltaTime) {
 }
 
 bool Gem::dissapear(float deltaTime) {
-	if (!isDisappearing)
+	if (!isDisappearing)// CHECK: Los if deben tener brackets
 		return false;
 
 	const float fadeSpeed = 400.f;
