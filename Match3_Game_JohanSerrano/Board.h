@@ -37,10 +37,13 @@ private:
     void applyGravity();
     void refill();
 
+    void spawnGem(int r, int c);
+
 public:
     Board();
 
     void initialize();
+    bool createsMatch(int row, int col, int kind);
     void loadTexture();
     void draw(RenderWindow& window);
 

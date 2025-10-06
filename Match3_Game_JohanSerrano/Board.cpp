@@ -8,17 +8,44 @@ Board::Board() {
 
 void Board::initialize() {
     srand(static_cast<unsigned int>(time(0)));
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLS; j++) {
-            int kind = rand() % 5;
-            grid[i][j] = Gem(kind, i, j);
-            grid[i][j].setSprite(texture);
-            grid[i][j].setGridPositions(i, j);
-            Vector2f dest(j * TILE_SIZE + offset.x, i * TILE_SIZE + offset.y);
-            grid[i][j].setDestination(dest);
+
+    int totalCells = ROWS * COLS;
+
+    for (int idx = 0; idx < totalCells; idx++) {
+        int i = idx / COLS;
+        int j = idx % COLS;
+
+        int kind = rand() % 5;
+
+        while (createsMatch(i, j, kind)) {
+            kind = rand() % 5;
         }
+
+        grid[i][j] = Gem(kind, i, j);
+        grid[i][j].setSprite(texture);
+        grid[i][j].setGridPositions(i, j);
+
+        Vector2f dest(j * TILE_SIZE + offset.x, i * TILE_SIZE + offset.y);
+        grid[i][j].setDestination(dest);
     }
+
 }
+
+
+
+bool Board::createsMatch(int row, int col, int kind) {
+
+    if (col >= 2 && grid[row][col - 1].getKind() == kind && grid[row][col - 2].getKind() == kind) {
+        return true;
+    }
+
+    if (row >= 2 && grid[row - 1][col].getKind() == kind && grid[row - 2][col].getKind() == kind) {
+        return true;
+    }
+
+    return false; // No hay match
+}
+
 
 void Board::loadTexture() {
     texture.loadFromFile("assets/spritesheet.png");
@@ -70,14 +97,17 @@ void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     switch (state) {
     case Idle:
         findMatches();
-        for (int r = 0; r < ROWS && !anyMatching; r++)// CHECK: Los for deben tener brackets
-            for (int c = 0; c < COLS && !anyMatching; c++)// CHECK: Los for deben tener brackets
-                if (matches[r][c]) anyMatching = true;// CHECK: Los if deben tener brackets
-
+        for (int r = 0; r < ROWS && !anyMatching; r++) {
+            for (int c = 0; c < COLS && !anyMatching; c++) {
+                if (matches[r][c]) { anyMatching = true; }
+            }
+        }
         if (anyMatching) {
-            for (int r = 0; r < ROWS; r++)// CHECK: Los for deben tener brackets
-                for (int c = 0; c < COLS; c++)// CHECK: Los for deben tener brackets
-                    if (matches[r][c]) grid[r][c].startDisappearing();// CHECK: Los if deben tener brackets
+            for (int r = 0; r < ROWS; r++) {
+                for (int c = 0; c < COLS; c++) {
+                    if (matches[r][c]) { grid[r][c].startDisappearing(); }
+                }
+            }
             playerInitiatedMove = false;
             state = Scoring;
         }
@@ -268,46 +298,61 @@ int Board::clearMatches() {
 void Board::applyGravity() {
     for (int c = 0; c < COLS; c++) {
         int writeRow = ROWS - 1;
+
         for (int r = ROWS - 1; r >= 0; r--) {
-            // CHECK: Código muy anidado, máximo 3 anidaciones
-            if (grid[r][c].getKind() != -1) {
-                if (r != writeRow) {
-                    grid[writeRow][c] = grid[r][c];
-                    grid[writeRow][c].resetTransientState();
-                    grid[writeRow][c].setGridPositions(writeRow, c);
-                    Vector2f dest(c * TILE_SIZE + offset.x,
-                        writeRow * TILE_SIZE + offset.y);
-                    grid[writeRow][c].setDestination(dest);
-                    grid[r][c].setKind(-1);
-                    grid[r][c].getSprite().setPosition(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
-                }
-                writeRow--;
+            if (grid[r][c].getKind() == -1) {
+                continue;
             }
+
+            if (r == writeRow) {
+                writeRow--;
+                continue;
+            }
+
+            grid[writeRow][c] = grid[r][c];
+            grid[writeRow][c].resetTransientState();
+            grid[writeRow][c].setGridPositions(writeRow, c);
+
+            Vector2f dest(c * TILE_SIZE + offset.x, writeRow * TILE_SIZE + offset.y);
+
+            grid[writeRow][c].setDestination(dest);
+
+            grid[r][c].setKind(-1);
+
+            grid[r][c].getSprite().setPosition(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
+
+            writeRow--;
         }
     }
 }
 
 void Board::refill() {
+
     for (int c = 0; c < COLS; c++) {
         for (int r = ROWS - 1; r >= 0; r--) {
-            // CHECK: Código muy anidado, máximo 3 anidaciones
-            if (grid[r][c].getKind() == -1) {
-                int kind = rand() % 5;
-                grid[r][c] = Gem(kind, r, c);
-                grid[r][c].setSprite(texture);
-
-                grid[r][c].resetTransientState();
-                grid[r][c].setGridPositions(r, c);
-
-                Vector2f spawn(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
-                grid[r][c].getSprite().setPosition(spawn);
-
-                Vector2f destination(c * TILE_SIZE + offset.x,
-                    r * TILE_SIZE + offset.y);
-                grid[r][c].setDestination(destination);
+            if (grid[r][c].getKind() != -1) {
+                continue;
             }
+            spawnGem(r, c);
         }
     }
+
+}
+
+void Board::spawnGem(int r, int c) {
+    int kind = rand() % 5;
+    grid[r][c] = Gem(kind, r, c);
+    grid[r][c].setSprite(texture);
+
+    grid[r][c].resetTransientState();
+    grid[r][c].setGridPositions(r, c);
+
+    Vector2f spawn(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
+    grid[r][c].getSprite().setPosition(spawn);
+
+    Vector2f destination(c * TILE_SIZE + offset.x,
+        r * TILE_SIZE + offset.y);
+    grid[r][c].setDestination(destination);
 }
 
 
