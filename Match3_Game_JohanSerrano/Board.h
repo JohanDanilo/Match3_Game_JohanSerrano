@@ -32,6 +32,8 @@ private:
     Vector2f swapOrigPos2;
 
 
+    void revertSwap();
+
     void findMatches();
     void checkLineMatches(bool horizontal);
     void markMatches(bool horizontal, int outer, int lastIndex, int count);
@@ -53,6 +55,20 @@ public:
     bool trySwapIndices(int row1, int col1, int row2, int col2);
 
     void update(float deltaTime, int& scoreGained, bool& moveConsumed);
+
+    void handleIdleState();
+
+    void handleSwappingState(float deltaTime);
+
+    void handleRevertingState(float deltaTime);
+
+    void handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed);
+
+    void handleMovingState(float deltaTime);
+
+    bool checkAnyMatch();
+
+    void triggerDisappearance();
 
     int getState() const;
     Gem& getGem(int row, int col);

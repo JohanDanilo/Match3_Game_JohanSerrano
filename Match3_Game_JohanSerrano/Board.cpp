@@ -92,140 +92,168 @@ bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
 void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     scoreGained = 0;
     moveConsumed = false;
-    bool anyMatching = false;
 
     switch (state) {
     case Idle:
+        handleIdleState();
+        break;
+
+    case Swapping:
+        handleSwappingState(deltaTime);
+        break;
+
+    case Reverting:
+        handleRevertingState(deltaTime);
+        break;
+
+    case Scoring:
+        handleScoringState(deltaTime, scoreGained, moveConsumed);
+        break;
+
+    case Moving:
+        handleMovingState(deltaTime);
+        break;
+    }
+}
+
+// ---------------------------------------------------
+
+void Board::handleIdleState() {
+    findMatches();
+    if (checkAnyMatch()) {
+        triggerDisappearance();
+        playerInitiatedMove = false;
+        state = Scoring;
+    }
+}
+
+// ---------------------------------------------------
+
+void Board::handleSwappingState(float deltaTime) {
+    bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
+    bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
+
+    if (done1 && done2) {
+        swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
+        grid[firstRow][firstCol].setGridPositions(firstRow, firstCol);
+        grid[secondRow][secondCol].setGridPositions(secondRow, secondCol);
+
         findMatches();
-        for (int r = 0; r < ROWS && !anyMatching; r++) {
-            for (int c = 0; c < COLS && !anyMatching; c++) {
-                if (matches[r][c]) { anyMatching = true; }
-            }
+        if (checkAnyMatch()) {
+            triggerDisappearance();
+            state = Scoring;
         }
-        if (anyMatching) {
-            for (int r = 0; r < ROWS; r++) {
-                for (int c = 0; c < COLS; c++) {
-                    if (matches[r][c]) { grid[r][c].startDisappearing(); }
+        else {
+            revertSwap();
+        }
+    }
+}
+
+// ---------------------------------------------------
+
+void Board::handleRevertingState(float deltaTime) {
+    bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
+    bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
+
+    if (done1 && done2) {
+        firstGem = nullptr;
+        secondGem = nullptr;
+        state = Idle;
+    }
+}
+
+// ---------------------------------------------------
+
+void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed) {
+    bool anyStillAnimating = false;
+
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (grid[r][c].getDisappearingState()) {
+                if (grid[r][c].dissapear(deltaTime)) {
+                    anyStillAnimating = true;
                 }
             }
+        }
+    }
+
+    if (!anyStillAnimating) {
+        scoreGained = clearMatches();
+        moveConsumed = playerInitiatedMove;
+        playerInitiatedMove = false;
+        applyGravity();
+        refill();
+        state = Moving;
+    }
+}
+
+// ---------------------------------------------------
+
+void Board::handleMovingState(float deltaTime) {
+    bool stillMoving = false;
+
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (!grid[r][c].moveGem(deltaTime)) {
+                stillMoving = true;
+            }
+        }
+    }
+
+    if (!stillMoving) {
+        findMatches();
+        if (checkAnyMatch()) {
+            triggerDisappearance();
             playerInitiatedMove = false;
             state = Scoring;
         }
-        break;
-
-    case Swapping: {
-        bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
-        bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
-
-        if (done1 && done2) {
-            swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
-
-            grid[firstRow][firstCol].setGridPositions(firstRow, firstCol);
-            grid[secondRow][secondCol].setGridPositions(secondRow, secondCol);
-
-            findMatches();
-            bool anyMatch = false;
-            // CHECK: Código muy anidado, máximo 3 anidaciones
-            for (int r = 0; r < ROWS && !anyMatch; r++)// CHECK: Los for deben tener brackets
-                for (int c = 0; c < COLS && !anyMatch; c++)// CHECK: Los for deben tener brackets
-                    if (matches[r][c]) anyMatch = true;// CHECK: Los if deben tener brackets
-
-            if (anyMatch) {
-                for (int r = 0; r < ROWS; r++)// CHECK: Los if deben tener brackets
-                    for (int c = 0; c < COLS; c++)// CHECK: Los if deben tener brackets
-                        if (matches[r][c]) grid[r][c].startDisappearing();// CHECK: Los if deben tener brackets
-                state = Scoring;
-            }
-            else {
-                swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
-                grid[firstRow][firstCol].setGridPositions(firstRow, firstCol);
-                grid[secondRow][secondCol].setGridPositions(secondRow, secondCol);
-
-                firstGem = &grid[firstRow][firstCol];
-                secondGem = &grid[secondRow][secondCol];
-                firstGem->setDestination(swapOrigPos1);
-                secondGem->setDestination(swapOrigPos2);
-
-                playerInitiatedMove = false;
-                state = Reverting;
-            }
-        }
-        break;
-    }
-
-    case Reverting: {
-        bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
-        bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
-        if (done1 && done2) {
-            firstGem = secondGem = nullptr;
+        else {
             state = Idle;
         }
-        break;
-    }
-
-    case Scoring: {
-        bool anyStillAnimating = false;
-
-        for (int r = 0; r < ROWS; r++) {
-            for (int c = 0; c < COLS; c++) {
-                // CHECK: Código muy anidado, máximo 3 anidaciones
-                if (grid[r][c].getDisappearingState()) {
-                    if (grid[r][c].dissapear(deltaTime)) {
-                        anyStillAnimating = true;
-                    }
-                }
-            }
-        }
-
-        if (!anyStillAnimating) {
-            scoreGained = clearMatches();
-            moveConsumed = playerInitiatedMove;
-            playerInitiatedMove = false;
-            applyGravity();
-            refill();
-            state = Moving;
-        }
-        break;
-    }
-
-    case Moving: {
-        bool stillMoving = false;
-        // CHECK: Los for deben tener brackets
-        for (int r = 0; r < ROWS; r++)
-        // CHECK: Los for deben tener brackets
-            for (int c = 0; c < COLS; c++)
-                // CHECK: Código muy anidado, máximo 3 anidaciones
-                if (!grid[r][c].moveGem(deltaTime)) stillMoving = true;
-
-        if (!stillMoving) {
-            findMatches();
-            bool anyMatch = false;
-            // CHECK: Código muy anidado, máximo 3 anidaciones
-            // CHECK: Los for deben tener brackets
-            for (int r = 0; r < ROWS && !anyMatch; r++)
-            // CHECK: Los for deben tener brackets
-                for (int c = 0; c < COLS && !anyMatch; c++)
-                    if (matches[r][c]) anyMatch = true;
-
-            if (anyMatch) {
-                // CHECK: Los for deben tener brackets
-                for (int r = 0; r < ROWS; r++)
-                // CHECK: Los for deben tener brackets
-                    for (int c = 0; c < COLS; c++)
-                // CHECK: Los if deben tener brackets
-                        if (matches[r][c]) grid[r][c].startDisappearing();
-                playerInitiatedMove = false;
-                state = Scoring;
-            }
-            else {
-                state = Idle;
-            }
-        }
-        break;
-    }
-
     }
 }
+
+// ---------------------------------------------------
+
+bool Board::checkAnyMatch() {
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (matches[r][c]) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// ---------------------------------------------------
+
+void Board::triggerDisappearance() {
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (matches[r][c]) {
+                grid[r][c].startDisappearing();
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------
+
+void Board::revertSwap() {
+    swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
+    grid[firstRow][firstCol].setGridPositions(firstRow, firstCol);
+    grid[secondRow][secondCol].setGridPositions(secondRow, secondCol);
+
+    firstGem = &grid[firstRow][firstCol];
+    secondGem = &grid[secondRow][secondCol];
+    firstGem->setDestination(swapOrigPos1);
+    secondGem->setDestination(swapOrigPos2);
+
+    playerInitiatedMove = false;
+    state = Reverting;
+}
+
 
 void Board::findMatches() {
     for (int r = 0; r < ROWS; r++) {
