@@ -33,6 +33,8 @@ private:
 
 
     void findMatches();
+    void checkLineMatches(bool horizontal);
+    void markMatches(bool horizontal, int outer, int lastIndex, int count);
     int clearMatches();
     void applyGravity();
     void refill();

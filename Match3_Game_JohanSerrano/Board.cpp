@@ -228,58 +228,63 @@ void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
 }
 
 void Board::findMatches() {
-    // CHECK: Los for deben tener brackets
-    for (int r = 0; r < ROWS; r++)
-    // CHECK: Los for deben tener brackets
-        for (int c = 0; c < COLS; c++)
-            matches[r][c] = false;
-
     for (int r = 0; r < ROWS; r++) {
-        int count = 1;
-        for (int c = 1; c < COLS; c++) {
-            int cur = grid[r][c].getKind();
-            int prev = grid[r][c - 1].getKind();
-            // CHECK: Código muy anidado, máximo 3 anidaciones
-            // CHECK: Los for deben tener brackets
-            if (cur >= 0 && prev >= 0 && cur == prev)
-                count++;
-            else {
-                // CHECK: Los for deben tener brackets
-                if (count >= 3)
-                // CHECK: Los for deben tener brackets
-                    for (int k = 0; k < count; k++) matches[r][c - 1 - k] = true;
-                count = 1;
-            }
+        for (int c = 0; c < COLS; c++) {
+            matches[r][c] = false;
         }
-        // CHECK: Los if deben tener brackets
-        if (count >= 3)
-        // CHECK: Los for deben tener brackets
-            for (int k = 0; k < count; k++) matches[r][COLS - 1 - k] = true;
     }
 
-    for (int c = 0; c < COLS; c++) {
+    checkLineMatches(true);
+    checkLineMatches(false);
+}
+
+void Board::checkLineMatches(bool horizontal) {
+    int outerLimit = ROWS;
+    int innerLimit = COLS;
+
+    for (int outer = 0; outer < outerLimit; outer++) {
         int count = 1;
-        for (int r = 1; r < ROWS; r++) {
-            int cur = grid[r][c].getKind();
-            int prev = grid[r - 1][c].getKind();
-            // CHECK: Código muy anidado, máximo 3 anidaciones
-            // CHECK: Los if deben tener brackets
-            if (cur >= 0 && prev >= 0 && cur == prev)
+
+        for (int inner = 1; inner < innerLimit; inner++) {
+            int r1 = horizontal ? outer : inner;
+            int c1 = horizontal ? inner : outer;
+            int r0 = horizontal ? outer : inner - 1;
+            int c0 = horizontal ? inner - 1 : outer;
+
+            int cur = grid[r1][c1].getKind();
+            int prev = grid[r0][c0].getKind();
+
+            bool same = (cur >= 0 && prev >= 0 && cur == prev);
+
+            if (same) {
                 count++;
+            }
             else {
-                // CHECK: Los if deben tener brackets
-                if (count >= 3)
-                // CHECK: Los for deben tener brackets
-                    for (int k = 0; k < count; k++) matches[r - 1 - k][c] = true;
+                if (count >= 3) {
+                    markMatches(horizontal, outer, inner - 1, count);
+                }
                 count = 1;
             }
         }
-        // CHECK: Los if deben tener brackets
-        if (count >= 3)
-        // CHECK: Los for deben tener brackets
-            for (int k = 0; k < count; k++) matches[ROWS - 1 - k][c] = true;
+
+        if (count >= 3) {
+            markMatches(horizontal, outer, innerLimit - 1, count);
+        }
     }
 }
+
+void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
+    for (int k = 0; k < count; k++) {
+        if (horizontal) {
+            matches[outer][lastIndex - k] = true;
+        }
+        else {
+            matches[lastIndex - k][outer] = true;
+        }
+    }
+}
+
+
 
 int Board::clearMatches() {
     int score = 0;
