@@ -10,20 +10,21 @@ void Game::init() {
 }
 
 void Game::loadResources() {
-    if (!font.loadFromFile("assets/gameFont.ttf"))// CHECK: Los if deben tener brackets
+    if (!font.loadFromFile("assets/gameFont.ttf")) {
         cerr << "Error loading font\n";
+    }
 
-    if (!mainMenuTexture.loadFromFile("assets/mainMenu.png"))// CHECK: Los if deben tener brackets
+    if (!mainMenuTexture.loadFromFile("assets/mainMenu.png")) {
         cerr << "Error loading mainMenu.png\n";
-    else mainMenuSprite.setTexture(mainMenuTexture);
+    } else mainMenuSprite.setTexture(mainMenuTexture);
 
-    if (!backgroundTexture.loadFromFile("assets/background.png"))// CHECK: Los if deben tener brackets
+    if (!backgroundTexture.loadFromFile("assets/background.png")) {
         cerr << "Error loading background.png\n";
-    else backgroundSprite.setTexture(backgroundTexture);
+    } else backgroundSprite.setTexture(backgroundTexture);
 
-    if (!gameOverTexture.loadFromFile("assets/gameOver.png"))// CHECK: Los if deben tener brackets
+    if (!gameOverTexture.loadFromFile("assets/gameOver.png")) {
         cerr << "Error loading gameOver.png\n";
-    else gameOverSprite.setTexture(gameOverTexture);
+    } else gameOverSprite.setTexture(gameOverTexture);
 }
 
 void Game::run() {
@@ -109,8 +110,8 @@ void Game::runGameLoop() {
         bool moveConsumed = false;
         board.update(deltaTime, scoreGained, moveConsumed);
 
-        if (scoreGained > 0) score += scoreGained;// CHECK: Los if deben tener brackets
-        if (moveConsumed) moves--;// CHECK: Los if deben tener brackets
+        if (scoreGained > 0) { score += scoreGained; }
+        if (moveConsumed) { moves--; }
 
         scoreText.setString("Score: " + to_string(score));
         movesText.setString("Moves: " + to_string(moves));
@@ -194,9 +195,9 @@ void Game::selectGem(RenderWindow& window) {
     Vector2f pos = getClickPosition(window);
     int col = static_cast<int>((pos.x - offset.x) / TILE_SIZE);
     int row = static_cast<int>((pos.y - offset.y) / TILE_SIZE);
-    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;// CHECK: Los if deben tener brackets
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) { return; }
 
-    if (board.getState() != 0) return;// CHECK: Los if deben tener brackets
+    if (board.getState() != 0) { return; }
 
     if (firstSelectedRow == -1) {
         firstSelectedRow = row;

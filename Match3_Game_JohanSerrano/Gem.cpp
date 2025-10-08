@@ -1,32 +1,32 @@
 #include "Gem.h"
+#include <cmath>
 
 Gem::Gem()
 {
-	x = y = 0.0;
-	column = row = kind = 0;
-	alpha = 255.0;
+    x = y = 0.0;
+    column = row = kind = 0;
+    alpha = 255.0;
 }
 
 void Gem::setSprite(Texture& texture)
 {
-	sprite.setTexture(texture);
-	sprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+    sprite.setTexture(texture);
+    sprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
 }
 
-Sprite& Gem::getSprite() 
+Sprite& Gem::getSprite()
 {
-	return sprite;
+    return sprite;
 }
 
-Gem::Gem(int aKind, int aRow, int aCol)
-{
-	kind = aKind;
-	row = aRow;
-	column = aCol;
-	x = (column * TILE_SIZE) + offset.x;
-	y = (row * TILE_SIZE) + offset.y;
-	alpha = 255.f;
-	sprite.setPosition(x , y);
+Gem::Gem(int aKind, int aRow, int aCol) {
+    kind = aKind;
+    row = aRow;
+    column = aCol;
+    x = (column * TILE_SIZE) + offset.x;
+    y = (row * TILE_SIZE) + offset.y;
+    alpha = 255.f;
+	sprite.setPosition(x, y);
 }
 
 Gem::~Gem()
@@ -34,9 +34,24 @@ Gem::~Gem()
 }
 
 void Gem::draw(RenderWindow& window)
-{	
+{
 	sprite.setColor(Color(255, 255, 255, alpha));
 	window.draw(sprite);
+}
+
+void Gem::onMatch(Board& board, int row, int col)
+{
+	startDisappearing();
+}
+
+string Gem::getType() const
+{
+	return string("Normal");
+}
+
+Gem* Gem::clone() const
+{
+	return new Gem(*this);
 }
 
 
@@ -91,7 +106,7 @@ void Gem::setDestination(const Vector2f& aDestination) {
 }
 
 bool Gem::moveGem(float deltaTime) {
-	if (!isMoving) return true;// CHECK: Los if deben tener brackets
+	if (!isMoving) { return true; }
 
 	const float speed = 400.f;
 	Vector2f currentPos = sprite.getPosition();
@@ -116,8 +131,7 @@ bool Gem::moveGem(float deltaTime) {
 }
 
 bool Gem::dissapear(float deltaTime) {
-	if (!isDisappearing)// CHECK: Los if deben tener brackets
-		return false;
+	if (!isDisappearing) { return false; }
 
 	const float fadeSpeed = 400.f;
 	alpha -= fadeSpeed * deltaTime;

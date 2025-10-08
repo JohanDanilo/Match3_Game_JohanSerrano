@@ -43,7 +43,7 @@ bool Board::createsMatch(int row, int col, int kind) {
         return true;
     }
 
-    return false; // No hay match
+    return false;
 }
 
 
@@ -60,14 +60,14 @@ void Board::draw(RenderWindow& window) {
 }
 
 bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
-    if (row1 == row2 && col1 == col2) return false;// CHECK: Los if deben tener brackets
+    if (row1 == row2 && col1 == col2) { return false; }
     return (abs(row1 - row2) + abs(col1 - col2) == 1);
 }
 
 bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
     if (row1 < 0 || row1 >= ROWS || col1 < 0 || col1 >= COLS ||
-        row2 < 0 || row2 >= ROWS || col2 < 0 || col2 >= COLS) return false;// CHECK: Los if deben tener brackets
-    if (!areAdjacent(row1, col1, row2, col2)) return false;// CHECK: Los if deben tener brackets
+        row2 < 0 || row2 >= ROWS || col2 < 0 || col2 >= COLS) { return false; }
+    if (!areAdjacent(row1, col1, row2, col2)) { return false; }
 
     firstRow = row1; firstCol = col1;
     secondRow = row2; secondCol = col2;
@@ -116,7 +116,6 @@ void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     }
 }
 
-// ---------------------------------------------------
 
 void Board::handleIdleState() {
     findMatches();
@@ -127,7 +126,6 @@ void Board::handleIdleState() {
     }
 }
 
-// ---------------------------------------------------
 
 void Board::handleSwappingState(float deltaTime) {
     bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
@@ -149,7 +147,6 @@ void Board::handleSwappingState(float deltaTime) {
     }
 }
 
-// ---------------------------------------------------
 
 void Board::handleRevertingState(float deltaTime) {
     bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
@@ -162,7 +159,6 @@ void Board::handleRevertingState(float deltaTime) {
     }
 }
 
-// ---------------------------------------------------
 
 void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed) {
     bool anyStillAnimating = false;
@@ -187,7 +183,6 @@ void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveCons
     }
 }
 
-// ---------------------------------------------------
 
 void Board::handleMovingState(float deltaTime) {
     bool stillMoving = false;
@@ -213,7 +208,6 @@ void Board::handleMovingState(float deltaTime) {
     }
 }
 
-// ---------------------------------------------------
 
 bool Board::checkAnyMatch() {
     for (int r = 0; r < ROWS; r++) {
@@ -226,7 +220,6 @@ bool Board::checkAnyMatch() {
     return false;
 }
 
-// ---------------------------------------------------
 
 void Board::triggerDisappearance() {
     for (int r = 0; r < ROWS; r++) {
@@ -238,7 +231,6 @@ void Board::triggerDisappearance() {
     }
 }
 
-// ---------------------------------------------------
 
 void Board::revertSwap() {
     swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
