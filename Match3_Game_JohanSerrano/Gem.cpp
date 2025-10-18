@@ -19,41 +19,9 @@ Sprite& Gem::getSprite()
     return sprite;
 }
 
-Gem::Gem(int aKind, int aRow, int aCol) {
-    kind = aKind;
-    row = aRow;
-    column = aCol;
-    x = (column * TILE_SIZE) + offset.x;
-    y = (row * TILE_SIZE) + offset.y;
-    alpha = 255.f;
-	sprite.setPosition(x, y);
-}
-
 Gem::~Gem()
 {
 }
-
-void Gem::draw(RenderWindow& window)
-{
-	sprite.setColor(Color(255, 255, 255, alpha));
-	window.draw(sprite);
-}
-
-void Gem::onMatch(Board& board, int row, int col)
-{
-	startDisappearing();
-}
-
-string Gem::getType() const
-{
-	return string("Normal");
-}
-
-Gem* Gem::clone() const
-{
-	return new Gem(*this);
-}
-
 
 void Gem::setKind(int aKind)
 {

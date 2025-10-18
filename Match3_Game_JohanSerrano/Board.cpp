@@ -6,6 +6,15 @@ Board::Board() {
     state = Idle;
 }
 
+Board::~Board() {
+    for (int r = 0; r < ROWS; ++r) {
+        for (int c = 0; c < COLS; ++c) {
+            delete grid[r][c];
+            grid[r][c] = nullptr;
+        }
+    }
+}
+
 void Board::initialize() {
     srand(static_cast<unsigned int>(time(0)));
 
@@ -21,12 +30,12 @@ void Board::initialize() {
             kind = rand() % 5;
         }
 
-        grid[i][j] = Gem(kind, i, j);
-        grid[i][j].setSprite(texture);
-        grid[i][j].setGridPositions(i, j);
+        grid[i][j] = new NormalGem(kind, i, j);
+        grid[i][j]->setSprite(texture);
+        grid[i][j]->setGridPositions(i, j);
 
         Vector2f dest(j * TILE_SIZE + offset.x, i * TILE_SIZE + offset.y);
-        grid[i][j].setDestination(dest);
+        grid[i][j]->setDestination(dest);
     }
 
 }
@@ -35,11 +44,11 @@ void Board::initialize() {
 
 bool Board::createsMatch(int row, int col, int kind) {
 
-    if (col >= 2 && grid[row][col - 1].getKind() == kind && grid[row][col - 2].getKind() == kind) {
+    if (col >= 2 && grid[row][col - 1]->getKind() == kind && grid[row][col - 2]->getKind() == kind) {
         return true;
     }
 
-    if (row >= 2 && grid[row - 1][col].getKind() == kind && grid[row - 2][col].getKind() == kind) {
+    if (row >= 2 && grid[row - 1][col]->getKind() == kind && grid[row - 2][col]->getKind() == kind) {
         return true;
     }
 
@@ -54,7 +63,7 @@ void Board::loadTexture() {
 void Board::draw(RenderWindow& window) {
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLS; j++) {
-            grid[i][j].draw(window);
+            grid[i][j]->draw(window);
         }
     }
 }
@@ -72,8 +81,8 @@ bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
     firstRow = row1; firstCol = col1;
     secondRow = row2; secondCol = col2;
 
-    firstGem = &grid[firstRow][firstCol];
-    secondGem = &grid[secondRow][secondCol];
+    firstGem = grid[firstRow][firstCol];
+    secondGem = grid[secondRow][secondCol];
 
     swapOrigPos1 = firstGem->getSprite().getPosition();
     swapOrigPos2 = secondGem->getSprite().getPosition();
@@ -133,8 +142,8 @@ void Board::handleSwappingState(float deltaTime) {
 
     if (done1 && done2) {
         swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
-        grid[firstRow][firstCol].setGridPositions(firstRow, firstCol);
-        grid[secondRow][secondCol].setGridPositions(secondRow, secondCol);
+        grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
+        grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
 
         findMatches();
         if (checkAnyMatch()) {
@@ -165,8 +174,8 @@ void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveCons
 
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
-            if (grid[r][c].getDisappearingState()) {
-                if (grid[r][c].dissapear(deltaTime)) {
+            if (grid[r][c]->getDisappearingState()) {
+                if (grid[r][c]->dissapear(deltaTime)) {
                     anyStillAnimating = true;
                 }
             }
@@ -189,7 +198,7 @@ void Board::handleMovingState(float deltaTime) {
 
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
-            if (!grid[r][c].moveGem(deltaTime)) {
+            if (!grid[r][c]->moveGem(deltaTime)) {
                 stillMoving = true;
             }
         }
@@ -225,7 +234,7 @@ void Board::triggerDisappearance() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
             if (matches[r][c]) {
-                grid[r][c].startDisappearing();
+                grid[r][c]->startDisappearing();
             }
         }
     }
@@ -234,11 +243,11 @@ void Board::triggerDisappearance() {
 
 void Board::revertSwap() {
     swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
-    grid[firstRow][firstCol].setGridPositions(firstRow, firstCol);
-    grid[secondRow][secondCol].setGridPositions(secondRow, secondCol);
+    grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
+    grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
 
-    firstGem = &grid[firstRow][firstCol];
-    secondGem = &grid[secondRow][secondCol];
+    firstGem = grid[firstRow][firstCol];
+    secondGem = grid[secondRow][secondCol];
     firstGem->setDestination(swapOrigPos1);
     secondGem->setDestination(swapOrigPos2);
 
@@ -271,8 +280,8 @@ void Board::checkLineMatches(bool horizontal) {
             int r0 = horizontal ? outer : inner - 1;
             int c0 = horizontal ? inner - 1 : outer;
 
-            int cur = grid[r1][c1].getKind();
-            int prev = grid[r0][c0].getKind();
+            int cur = grid[r1][c1]->getKind();
+            int prev = grid[r0][c0]->getKind();
 
             bool same = (cur >= 0 && prev >= 0 && cur == prev);
 
@@ -311,8 +320,8 @@ int Board::clearMatches() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
             if (matches[r][c]) {
-                grid[r][c].setKind(-1);
-                grid[r][c].getSprite().setColor(Color(255, 255, 255, 0));
+                grid[r][c]->setKind(-1);
+                grid[r][c]->getSprite().setColor(Color(255, 255, 255, 0));
                 score += 10;
             }
         }
@@ -322,40 +331,43 @@ int Board::clearMatches() {
 
 void Board::applyGravity() {
     for (int c = 0; c < COLS; c++) {
-        int writeRow = ROWS - 1;
-
         for (int r = ROWS - 1; r >= 0; r--) {
-            if (grid[r][c].getKind() == -1) {
+
+            Gem* current = grid[r][c];
+            if (!current || current->getKind() != -1) {
                 continue;
             }
 
-            if (r == writeRow) {
-                writeRow--;
-                continue;
+            int above = r - 1;
+            while (above >= 0) {
+                Gem* upper = grid[above][c];
+                if (upper && upper->getKind() != -1) {
+                    swap(grid[r][c], grid[above][c]);
+
+                    Gem* fallingGem = grid[r][c];
+                    fallingGem->resetTransientState();
+                    fallingGem->setGridPositions(r, c);
+                    Vector2f dest(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
+                    fallingGem->setDestination(dest);
+
+                    grid[above][c]->setKind(-1);
+                    grid[above][c]->getSprite().setPosition(
+                        c * TILE_SIZE + offset.x, above * TILE_SIZE + offset.y);
+                    grid[above][c]->getSprite().setColor(Color(255, 255, 255, 0));
+                    break;
+                }
+                above--;
             }
-
-            grid[writeRow][c] = grid[r][c];
-            grid[writeRow][c].resetTransientState();
-            grid[writeRow][c].setGridPositions(writeRow, c);
-
-            Vector2f dest(c * TILE_SIZE + offset.x, writeRow * TILE_SIZE + offset.y);
-
-            grid[writeRow][c].setDestination(dest);
-
-            grid[r][c].setKind(-1);
-
-            grid[r][c].getSprite().setPosition(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
-
-            writeRow--;
         }
     }
 }
+
 
 void Board::refill() {
 
     for (int c = 0; c < COLS; c++) {
         for (int r = ROWS - 1; r >= 0; r--) {
-            if (grid[r][c].getKind() != -1) {
+            if (grid[r][c]->getKind() != -1) {
                 continue;
             }
             spawnGem(r, c);
@@ -366,18 +378,18 @@ void Board::refill() {
 
 void Board::spawnGem(int r, int c) {
     int kind = rand() % 5;
-    grid[r][c] = Gem(kind, r, c);
-    grid[r][c].setSprite(texture);
+    grid[r][c] = new NormalGem(kind, r, c);
+    grid[r][c]->setSprite(texture);
 
-    grid[r][c].resetTransientState();
-    grid[r][c].setGridPositions(r, c);
+    grid[r][c]->resetTransientState();
+    grid[r][c]->setGridPositions(r, c);
 
     Vector2f spawn(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
-    grid[r][c].getSprite().setPosition(spawn);
+    grid[r][c]->getSprite().setPosition(spawn);
 
     Vector2f destination(c * TILE_SIZE + offset.x,
         r * TILE_SIZE + offset.y);
-    grid[r][c].setDestination(destination);
+    grid[r][c]->setDestination(destination);
 }
 
 
@@ -385,7 +397,7 @@ int Board::getState() const {
     return static_cast<int>(state);
 }
 
-Gem& Board::getGem(int row, int col) {
+Gem* Board::getGem(int row, int col) {
     return grid[row][col];
 }
 

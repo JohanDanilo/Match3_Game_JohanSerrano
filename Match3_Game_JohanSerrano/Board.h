@@ -1,9 +1,13 @@
 #pragma once
 #include "Gem.h"
+#include "NormalGem.h"
+#include "BombGem.h"
+#include "IceGem.h"
 #include <SFML/Graphics.hpp>
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
+
 
 using namespace sf;
 using namespace std;
@@ -16,7 +20,7 @@ private:
     enum BoardState { Idle, Swapping, Reverting, Scoring, Moving };
     BoardState state;
 
-    Gem grid[ROWS][COLS];
+    Gem* grid[ROWS][COLS];
     bool matches[ROWS][COLS] = { false };
 
     Gem* firstGem = nullptr;
@@ -45,6 +49,7 @@ private:
 
 public:
     Board();
+    ~Board();
 
     void initialize();
     bool createsMatch(int row, int col, int kind);
@@ -71,6 +76,6 @@ public:
     void triggerDisappearance();
 
     int getState() const;
-    Gem& getGem(int row, int col);
+    Gem* getGem(int row, int col);
 
 };

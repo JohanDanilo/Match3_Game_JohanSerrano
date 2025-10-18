@@ -15,7 +15,7 @@ const Vector2f offset(171, 70);
 class Board; // evita includes circulares
 
 class Gem {
-private:
+protected:
 
     float x;
     float y;
@@ -36,13 +36,13 @@ public:
     virtual void setSprite(Texture& texture);
     Sprite& getSprite();
 
-    virtual void draw(RenderWindow& window);
+    virtual void draw(RenderWindow& window) = 0;
 
-    virtual void onMatch(Board& board, int row, int col);
+    //virtual void onMatch(Board& board, int row, int col);
 
-    virtual string getType() const;
+    virtual string getType() const = 0;
 
-    virtual Gem* clone() const;
+    //virtual Gem* clone() const;
 
     void setKind(int aType);
     void setGridPositions(int aRow, int aColum);

@@ -98,11 +98,8 @@ void Game::runGameLoop() {
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed) { window.close(); running = false; }
 
-            if (event.type == Event::MouseButtonPressed &&
-                event.mouseButton.button == Mouse::Right) {
-                if (isClickInsideBoard(window)) {
-                    selectGem(window);
-                }
+            if (event.type == Event::MouseButtonPressed && isClickInsideBoard(window)) {
+                selectGem(window);
             }
         }
 
