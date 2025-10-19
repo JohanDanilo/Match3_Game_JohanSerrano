@@ -2,6 +2,7 @@
 #include "Gem.h"
 class IceGem : public Gem
 {
+public:
 	IceGem(int aKind, int aRow, int aCol);
 
 	string getType() const override;

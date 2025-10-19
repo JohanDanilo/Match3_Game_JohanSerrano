@@ -2,6 +2,7 @@
 #include "Gem.h"
 class BombGem : public Gem
 {
+public:
 	BombGem(int aKind, int aRow, int aCol);
 
 	string getType() const override;

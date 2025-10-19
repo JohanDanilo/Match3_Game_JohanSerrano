@@ -47,6 +47,8 @@ private:
 
     void spawnGem(int r, int c);
 
+    void spawnSpecialGem(int row, int col, bool horizontal);
+
 public:
     Board();
     ~Board();

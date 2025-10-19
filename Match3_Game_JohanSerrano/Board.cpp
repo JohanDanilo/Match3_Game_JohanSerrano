@@ -303,13 +303,64 @@ void Board::checkLineMatches(bool horizontal) {
 }
 
 void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
-    for (int k = 0; k < count; k++) {
-        if (horizontal) {
-            matches[outer][lastIndex - k] = true;
+    // Rango del match detectado
+    int startIndex = lastIndex - count + 1;
+
+    // Variables para determinar dónde aparecerá la gema especial
+    int destRow = -1;
+    int destCol = -1;
+
+    // Si el match tiene 4 o más gemas, puede generar una gema especial
+    if (count >= 4) {
+
+        auto inSequence = [&](int r, int c) -> bool {
+            if (horizontal) {
+                return (r == outer && c >= startIndex && c <= lastIndex);
+            }
+            else {
+                return (c == outer && r >= startIndex && r <= lastIndex);
+            }
+            };
+
+        // Caso 1: Match causado por el jugador
+        if (playerInitiatedMove) {
+            if (inSequence(secondRow, secondCol)) {
+                destRow = secondRow;
+                destCol = secondCol;
+            }
+            else if (inSequence(firstRow, firstCol)) {
+                destRow = firstRow;
+                destCol = firstCol;
+            }
         }
-        else {
-            matches[lastIndex - k][outer] = true;
+
+        // Caso 2: Match causado por gravedad (ninguna jugada activa)
+        if (destRow == -1 || destCol == -1) {
+            if (horizontal) {
+                destRow = outer;
+                destCol = lastIndex - (count / 2); // posición central
+            }
+            else {
+                destRow = lastIndex - (count / 2);
+                destCol = outer;
+            }
         }
+
+        // Crear la gema especial en la posición elegida
+        spawnSpecialGem(destRow, destCol, horizontal);
+    }
+
+    // Marcar todas las gemas que forman parte del match
+    for (int k = 0; k < count; ++k) {
+        int r = horizontal ? outer : lastIndex - k;
+        int c = horizontal ? lastIndex - k : outer;
+
+        // No eliminar la gema especial creada
+        if (r == destRow && c == destCol) {
+            continue;
+        }
+
+        matches[r][c] = true;
     }
 }
 
@@ -390,6 +441,38 @@ void Board::spawnGem(int r, int c) {
     Vector2f destination(c * TILE_SIZE + offset.x,
         r * TILE_SIZE + offset.y);
     grid[r][c]->setDestination(destination);
+}
+
+void Board::spawnSpecialGem(int row, int col, bool horizontal) {
+    // Verificación de límites
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
+
+    // Verificar que haya una gema existente
+    if (!grid[row][col]) return;
+
+    // Guardar el tipo de gema actual
+    int kind = grid[row][col]->getKind();
+
+    // Liberar la gema previa
+    delete grid[row][col];
+    grid[row][col] = nullptr;
+
+    // Crear la gema especial según el tipo de match
+    if (horizontal) {
+        grid[row][col] = new BombGem(kind, row, col);
+    }
+    else {
+        grid[row][col] = new IceGem(kind, row, col);
+    }
+
+    // Configurar sprite, posición y estado
+    grid[row][col]->setSprite(texture);
+    grid[row][col]->resetTransientState();
+    grid[row][col]->setGridPositions(row, col);
+
+    Vector2f dest(col * TILE_SIZE + offset.x, row * TILE_SIZE + offset.y);
+    grid[row][col]->getSprite().setPosition(dest);
+    grid[row][col]->setDestination(dest);
 }
 
 
