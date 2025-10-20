@@ -65,7 +65,7 @@ public:
 
     void handleIdleState();
 
-    void handleSwappingState(float deltaTime);
+    void handleSwappingState(float deltaTime, bool& moveConsumed);
 
     void handleRevertingState(float deltaTime);
 
@@ -80,4 +80,7 @@ public:
     int getState() const;
     Gem* getGem(int row, int col);
 
+    void activateBombEffect(int row, int col);
+
+    void activateIceEffect(int row);
 };

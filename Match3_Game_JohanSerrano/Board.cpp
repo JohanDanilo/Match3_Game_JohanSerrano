@@ -108,7 +108,7 @@ void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
         break;
 
     case Swapping:
-        handleSwappingState(deltaTime);
+        handleSwappingState(deltaTime, moveConsumed);
         break;
 
     case Reverting:
@@ -135,8 +135,7 @@ void Board::handleIdleState() {
     }
 }
 
-
-void Board::handleSwappingState(float deltaTime) {
+void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
     bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
     bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
 
@@ -144,6 +143,43 @@ void Board::handleSwappingState(float deltaTime) {
         swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
         grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
         grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
+
+        if (firstGem) {
+            string type1 = firstGem->getType();
+            if (type1 == "Bomb") {
+                activateBombEffect(secondRow, secondCol);
+                playerInitiatedMove = false;
+                moveConsumed = true;
+                state = Scoring;
+                return;
+            }
+            else if (type1 == "Ice") {
+                activateIceEffect(secondRow);
+                playerInitiatedMove = false;
+                moveConsumed = true;
+                state = Scoring;
+                return;
+            }
+        }
+
+        if (secondGem) {
+            string type2 = secondGem->getType();
+            if (type2 == "Bomb") {
+                activateBombEffect(firstRow, firstCol);
+                playerInitiatedMove = false;
+                moveConsumed = true;
+                state = Scoring;
+                return;
+            }
+            else if (type2 == "Ice") {
+                activateIceEffect(firstRow);
+                playerInitiatedMove = false;
+                moveConsumed = true;
+                state = Scoring;
+                return;
+            }
+        }
+
 
         findMatches();
         if (checkAnyMatch()) {
@@ -280,10 +316,20 @@ void Board::checkLineMatches(bool horizontal) {
             int r0 = horizontal ? outer : inner - 1;
             int c0 = horizontal ? inner - 1 : outer;
 
+            if (!grid[r1][c1] || !grid[r0][c0]) {
+                if (count >= 3) {
+                    markMatches(horizontal, outer, inner - 1, count);
+                }
+                count = 1;
+                continue;
+            }
+
             int cur = grid[r1][c1]->getKind();
             int prev = grid[r0][c0]->getKind();
 
-            bool same = (cur >= 0 && prev >= 0 && cur == prev);
+            bool bothNormal = (grid[r1][c1]->getType() == "Normal" && grid[r0][c0]->getType() == "Normal");
+
+            bool same = (cur >= 0 && prev >= 0 && cur == prev && bothNormal);
 
             if (same) {
                 count++;
@@ -302,15 +348,13 @@ void Board::checkLineMatches(bool horizontal) {
     }
 }
 
+
 void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
-    // Rango del match detectado
     int startIndex = lastIndex - count + 1;
 
-    // Variables para determinar dónde aparecerá la gema especial
     int destRow = -1;
     int destCol = -1;
 
-    // Si el match tiene 4 o más gemas, puede generar una gema especial
     if (count >= 4) {
 
         auto inSequence = [&](int r, int c) -> bool {
@@ -322,7 +366,6 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
             }
             };
 
-        // Caso 1: Match causado por el jugador
         if (playerInitiatedMove) {
             if (inSequence(secondRow, secondCol)) {
                 destRow = secondRow;
@@ -334,11 +377,10 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
             }
         }
 
-        // Caso 2: Match causado por gravedad (ninguna jugada activa)
         if (destRow == -1 || destCol == -1) {
             if (horizontal) {
                 destRow = outer;
-                destCol = lastIndex - (count / 2); // posición central
+                destCol = lastIndex - (count / 2);
             }
             else {
                 destRow = lastIndex - (count / 2);
@@ -346,22 +388,24 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
             }
         }
 
-        // Crear la gema especial en la posición elegida
         spawnSpecialGem(destRow, destCol, horizontal);
     }
 
-    // Marcar todas las gemas que forman parte del match
     for (int k = 0; k < count; ++k) {
         int r = horizontal ? outer : lastIndex - k;
         int c = horizontal ? lastIndex - k : outer;
 
-        // No eliminar la gema especial creada
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
+            continue;
+        }
+
         if (r == destRow && c == destCol) {
             continue;
         }
 
         matches[r][c] = true;
     }
+
 }
 
 
@@ -444,20 +488,15 @@ void Board::spawnGem(int r, int c) {
 }
 
 void Board::spawnSpecialGem(int row, int col, bool horizontal) {
-    // Verificación de límites
     if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
 
-    // Verificar que haya una gema existente
     if (!grid[row][col]) return;
 
-    // Guardar el tipo de gema actual
     int kind = grid[row][col]->getKind();
 
-    // Liberar la gema previa
     delete grid[row][col];
     grid[row][col] = nullptr;
 
-    // Crear la gema especial según el tipo de match
     if (horizontal) {
         grid[row][col] = new BombGem(kind, row, col);
     }
@@ -465,7 +504,6 @@ void Board::spawnSpecialGem(int row, int col, bool horizontal) {
         grid[row][col] = new IceGem(kind, row, col);
     }
 
-    // Configurar sprite, posición y estado
     grid[row][col]->setSprite(texture);
     grid[row][col]->resetTransientState();
     grid[row][col]->setGridPositions(row, col);
@@ -484,3 +522,21 @@ Gem* Board::getGem(int row, int col) {
     return grid[row][col];
 }
 
+void Board::activateBombEffect(int row, int col) {
+    const int RADIUS = 1;
+    for (int r = row - RADIUS; r <= row + RADIUS; ++r) {
+        for (int c = col - RADIUS; c <= col + RADIUS; ++c) {
+            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                grid[r][c]->startDisappearing();
+                matches[r][c] = true;
+            }
+        }
+    }
+}
+
+void Board::activateIceEffect(int row) {
+    for (int c = 0; c < COLS; ++c) {
+        grid[row][c]->startDisappearing();
+        matches[row][c] = true;
+    }
+}

@@ -13,7 +13,7 @@ IceGem::IceGem(int aKind, int aRow, int aCol)
 
 string IceGem::getType() const
 {
-    return string("Ice Gem");
+    return string("Ice");
 }
 
 void IceGem::draw(RenderWindow& window)

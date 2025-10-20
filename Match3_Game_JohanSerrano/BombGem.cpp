@@ -13,7 +13,7 @@ BombGem::BombGem(int aKind, int aRow, int aCol)
 
 string BombGem::getType() const
 {
-	return string("Bomb Gem");
+	return string("Bomb");
 }
 
 void BombGem::draw(RenderWindow& window)
