@@ -138,6 +138,7 @@
     <ClCompile Include="IceGem.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NormalGem.cpp" />
+    <ClCompile Include="Objective.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
@@ -146,6 +147,7 @@
     <ClInclude Include="Gem.h" />
     <ClInclude Include="IceGem.h" />
     <ClInclude Include="NormalGem.h" />
+    <ClInclude Include="Objective.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
