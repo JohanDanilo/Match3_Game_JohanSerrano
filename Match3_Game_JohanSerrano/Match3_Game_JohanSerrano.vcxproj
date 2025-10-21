@@ -137,6 +137,7 @@
     <ClCompile Include="Gem.cpp" />
     <ClCompile Include="IceGem.cpp" />
     <ClCompile Include="Level.cpp" />
+    <ClCompile Include="LevelManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NormalGem.cpp" />
     <ClCompile Include="Objective.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Gem.h" />
     <ClInclude Include="IceGem.h" />
     <ClInclude Include="Level.h" />
+    <ClInclude Include="LevelManager.h" />
     <ClInclude Include="NormalGem.h" />
     <ClInclude Include="Objective.h" />
   </ItemGroup>
