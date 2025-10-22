@@ -89,4 +89,6 @@ public:
     void placeObstacles(int count);
     void clearObstacles();
     void updateScoreObjective(int scoreGained);
+
+    void clearCurrentLevel();
 };

@@ -11,6 +11,7 @@ protected:
     int maxHealth = 0;
     Sprite sprite;
     bool isDestroyed = false;
+    Texture obstacleTexture;
 
 public:
     Obstacle(int aRow, int aCol, int health);

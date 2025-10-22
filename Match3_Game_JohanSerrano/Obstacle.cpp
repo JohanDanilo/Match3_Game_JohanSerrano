@@ -42,11 +42,11 @@ int Obstacle::getHealth() const {
 }
 
 void Obstacle::setSprite() {
-    Texture texture;
-    if (!texture.loadFromFile("assets/obstacle.png")) {
-        cerr << "Error loading background.png\n";
+    if (!obstacleTexture.loadFromFile("assets/obstacle.png")) {
+        cerr << "Error loading obstacle.png\n";
+        return;
     }
-    else sprite.setTexture(texture);
+    sprite.setTexture(obstacleTexture);
 }
 
 Sprite& Obstacle::getSprite() {

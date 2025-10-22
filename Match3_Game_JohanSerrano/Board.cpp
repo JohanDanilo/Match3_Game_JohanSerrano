@@ -17,12 +17,23 @@ Board::~Board() {
 }
 
 void Board::initialize() {
+
+    for (int r = 0; r < ROWS; ++r) {
+        for (int c = 0; c < COLS; ++c) {
+            if (grid[r][c] != nullptr) {
+                delete grid[r][c];
+                grid[r][c] = nullptr;
+            }
+        }
+    }
+
     srand(static_cast<unsigned int>(time(0)));
     int totalCells = ROWS * COLS;
 
     for (int idx = 0; idx < totalCells; idx++) {
         int i = idx / COLS;
         int j = idx % COLS;
+
         int kind = rand() % 5;
 
         while (createsMatch(i, j, kind)) {
@@ -36,6 +47,12 @@ void Board::initialize() {
         Vector2f dest(j * TILE_SIZE + offset.x, i * TILE_SIZE + offset.y);
         grid[i][j]->setDestination(dest);
     }
+
+    state = Idle;
+    playerInitiatedMove = false;
+    firstGem = nullptr;
+    secondGem = nullptr;
+    firstRow = firstCol = secondRow = secondCol = -1;
 }
 
 bool Board::createsMatch(int row, int col, int kind) {
@@ -400,10 +417,8 @@ int Board::clearMatches() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
             if (matches[r][c]) {
-                // Actualizar objetivos cuando se elimina una gema
                 updateObjectivesOnMatch(r, c);
 
-                // Dañar obstáculos adyacentes
                 damageAdjacentObstacles(r, c);
 
                 grid[r][c]->setKind(-1);
@@ -426,7 +441,6 @@ void Board::updateObjectivesOnMatch(int row, int col) {
 
     int gemKind = gem->getKind();
 
-    // Actualizar objetivo si es de recolección de gemas del color correcto
     if (objective->getType() == ObjectiveType::CollectGems) {
         if (objective->getGemKind() == gemKind) {
             objective->addProgress(1);
@@ -435,7 +449,6 @@ void Board::updateObjectivesOnMatch(int row, int col) {
 }
 
 void Board::damageAdjacentObstacles(int row, int col) {
-    // Direcciones: arriba, abajo, izquierda, derecha
     int dr[] = { -1, 1, 0, 0 };
     int dc[] = { 0, 0, -1, 1 };
 
@@ -449,7 +462,6 @@ void Board::damageAdjacentObstacles(int row, int col) {
                     if (obs->getRow() == nr && obs->getCol() == nc) {
                         obs->takeDamage();
 
-                        // Si el obstáculo fue destruido, actualizar objetivo
                         if (obs->isDestroyedState() && currentLevel) {
                             Objective* objective = currentLevel->getObjective();
                             if (objective && objective->getType() == ObjectiveType::ClearObstacles) {
@@ -512,7 +524,6 @@ void Board::refill() {
             if (grid[r][c]->getKind() != -1) {
                 continue;
             }
-            // No generar gemas donde hay obstáculos
             if (!hasObstacleAt(r, c)) {
                 spawnGem(r, c);
             }
@@ -537,12 +548,15 @@ void Board::spawnGem(int r, int c) {
 
 void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
+
     if (!grid[row][col]) return;
 
     int kind = grid[row][col]->getKind();
 
-    delete grid[row][col];
-    grid[row][col] = nullptr;
+    if (grid[row][col] != nullptr) {
+        delete grid[row][col];
+        grid[row][col] = nullptr;
+    }
 
     if (horizontal) {
         grid[row][col] = new BombGem(kind, row, col);
@@ -602,9 +616,8 @@ void Board::placeObstacles(int count) {
             int r = rand() % ROWS;
             int c = rand() % COLS;
 
-            // No colocar obstáculos donde ya hay uno
             if (!hasObstacleAt(r, c)) {
-                IronBlock* iron = new IronBlock(r, c);  // Usa tu IronBlock
+                IronBlock* iron = new IronBlock(r, c);
                 obstacles.push_back(iron);
                 placed = true;
             }
@@ -627,4 +640,15 @@ void Board::updateScoreObjective(int scoreGained) {
     if (objective && objective->getType() == ObjectiveType::ReachScore) {
         objective->addProgress(scoreGained);
     }
+}
+
+void Board::clearCurrentLevel() {
+    currentLevel = nullptr;
+
+    for (Obstacle* obs : obstacles) {
+        if (obs) {
+            delete obs;
+        }
+    }
+    obstacles.clear();
 }

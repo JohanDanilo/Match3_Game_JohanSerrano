@@ -17,6 +17,16 @@ void LevelManager::initializeLevels() {
     createLevel3();
 }
 
+void LevelManager::reset() {
+    currentLevelIndex = 0;
+
+    for (Level* level : levels) {
+        if (level) {
+            level->resetLevel();
+        }
+    }
+}
+
 void LevelManager::createLevel1() {
     Objective* obj1 = new Objective(ObjectiveType::CollectGems, 20, 0);
     Level* level1 = new Level(1, 20, obj1);

@@ -345,18 +345,19 @@ void Game::runLevelComplete() {
                         startLevel();
                     }
                     else {
-                        // Reiniciar desde nivel 1
-                        levelManager = LevelManager();
+                        board.clearCurrentLevel();
+                        levelManager.reset();
                         state = GameState::Playing;
                         startLevel();
                     }
                     window.close();
                     waiting = false;
                 }
-                // Click en botón Quit
+                
                 else if (quitButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    board.clearCurrentLevel();  // Limpiar referencias del board
+                    levelManager.reset();
                     state = GameState::MainMenu;
-                    levelManager = LevelManager();
                     window.close();
                     waiting = false;
                 }
@@ -424,8 +425,9 @@ void Game::runGameOver() {
         state = GameState::Playing;
     }
     else {
+        board.clearCurrentLevel();
+        levelManager.reset();
         state = GameState::MainMenu;
-        levelManager = LevelManager();
     }
 }
 

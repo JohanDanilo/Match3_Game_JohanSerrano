@@ -15,7 +15,7 @@ private:
 public:
     LevelManager();
     ~LevelManager();
-
+    void reset();
     void initializeLevels();
     Level* getCurrentLevel();
     bool hasNextLevel() const;
