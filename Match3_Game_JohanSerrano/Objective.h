@@ -24,7 +24,7 @@ public:
 
     void addProgress(int amount = 1);
     bool isCompleted() const;
-    float getProgress() const;  // Retorna 0.0 a 1.0
+    float getProgress() const;
 
     string getDescription() const;
     int getCurrentAmount() const;

@@ -35,6 +35,7 @@ private:
     void selectGem(RenderWindow& window);
     void refillMoves();
     void clearScore();
+    void showGemTargetIfNeed(RenderWindow& window, Objective* anObjective);
     void startLevel();
     void drawObjectivesPanel(RenderWindow& window);
     bool checkLevelCompletion();

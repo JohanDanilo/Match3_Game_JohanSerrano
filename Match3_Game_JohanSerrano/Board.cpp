@@ -524,12 +524,16 @@ void Board::refill() {
             if (grid[r][c]->getKind() != -1) {
                 continue;
             }
-            if (!hasObstacleAt(r, c)) {
-                spawnGem(r, c);
+
+            if (hasObstacleAt(r, c)) {
+                continue;
             }
+
+            spawnGem(r, c);
         }
     }
 }
+
 
 void Board::spawnGem(int r, int c) {
     int kind = rand() % 5;

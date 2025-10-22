@@ -148,7 +148,6 @@ void Game::runGameLoop() {
         }
         if (moveConsumed) { moves--; }
 
-        // Actualizar textos
         scoreText.setString("Score: " + to_string(score));
         movesText.setString("Moves: " + to_string(moves));
         levelText.setString("Level " + to_string(levelManager.getCurrentLevelNumber()));
@@ -160,19 +159,21 @@ void Game::runGameLoop() {
         window.draw(movesText);
         window.draw(levelText);
 
-        // Dibujar panel de objetivos
         drawObjectivesPanel(window);
 
         window.display();
 
-        // Verificar si se completó el nivel
-        if (checkLevelCompletion()) {
-            state = GameState::LevelComplete;
+        if (moves <= 0 && board.getState() == 0) {
+            if (checkLevelCompletion()) {
+                state = GameState::LevelComplete;
+            }
+            else {
+                state = GameState::GameOver;
+            }
             window.close();
         }
-        // Verificar si se acabaron los movimientos
-        else if (moves <= 0 && board.getState() == 0) {
-            state = GameState::GameOver;
+        else if (checkLevelCompletion()) {
+            state = GameState::LevelComplete;
             window.close();
         }
     }
@@ -185,15 +186,13 @@ void Game::drawObjectivesPanel(RenderWindow& window) {
     Objective* objective = currentLevel->getObjective();
     if (!objective) return;
 
-    // Panel de fondo
-    RectangleShape panel(Vector2f(300, 60));
+    RectangleShape panel(Vector2f(310, 60));
     panel.setPosition(8, 535);
     panel.setFillColor(Color(19, 14, 59, 160));
     panel.setOutlineColor(Color(0, 0, 0));
     panel.setOutlineThickness(2);
     window.draw(panel);
 
-    // Título
     Text title;
     title.setFont(font);
     title.setString("Objective");
@@ -204,16 +203,13 @@ void Game::drawObjectivesPanel(RenderWindow& window) {
     title.setPosition(10, 520);
     window.draw(title);
 
-    // Texto del objetivo
+
     Text objText;
     objText.setFont(font);
     objText.setCharacterSize(40);
     objText.setOutlineColor(Color::Black);
     objText.setOutlineThickness(2);
     objText.setPosition(10, 540);
-
-    int kind = objective->getGemKind();
-    Texture target;
 
     string objStr = "";
     Color textColor = Color::White;
@@ -241,7 +237,8 @@ void Game::drawObjectivesPanel(RenderWindow& window) {
     objText.setFillColor(textColor);
     window.draw(objText);
 
-    // Barra de progreso
+    showGemTargetIfNeed(window, objective);
+
     RectangleShape progressBg(Vector2f(150, 10));
     progressBg.setPosition(12, 580);
     progressBg.setFillColor(Color(50, 50, 50));
@@ -265,7 +262,6 @@ void Game::runLevelComplete() {
     RenderWindow window(VideoMode(800, 600), "Level Complete!");
     window.setFramerateLimit(144);
 
-    // Fondo semi-transparente
     RectangleShape bg(Vector2f(800, 600));
     bg.setFillColor(Color(0, 100, 0, 200));
 
@@ -287,7 +283,6 @@ void Game::runLevelComplete() {
     scoreDisplayText.setOutlineThickness(2);
     scoreDisplayText.setPosition(250, 250);
 
-    // Botones
     RectangleShape nextButton(Vector2f(200, 50));
     nextButton.setPosition(300, 400);
     nextButton.setFillColor(Color(0, 200, 0));
@@ -337,7 +332,7 @@ void Game::runLevelComplete() {
             if (e.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
 
-                // Click en botón Next/Play Again
+                
                 if (nextButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                     if (hasNext) {
                         levelManager.nextLevel();
@@ -355,7 +350,7 @@ void Game::runLevelComplete() {
                 }
                 
                 else if (quitButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                    board.clearCurrentLevel();  // Limpiar referencias del board
+                    board.clearCurrentLevel();
                     levelManager.reset();
                     state = GameState::MainMenu;
                     window.close();
@@ -425,9 +420,8 @@ void Game::runGameOver() {
         state = GameState::Playing;
     }
     else {
-        board.clearCurrentLevel();
-        levelManager.reset();
-        state = GameState::MainMenu;
+        running = false;
+        window.close();
     }
 }
 
@@ -482,4 +476,39 @@ void Game::refillMoves() {
 
 void Game::clearScore() {
     score = 0;
+}
+
+void Game::showGemTargetIfNeed(RenderWindow&  window, Objective* objective) {
+    if (objective->getType() == ObjectiveType::CollectGems) {
+        int gemKind = objective->getGemKind();
+
+        RectangleShape gemFrame(Vector2f(60, 60));
+        gemFrame.setPosition(465, 535);
+        gemFrame.setFillColor(Color(50, 50, 50, 180));
+        gemFrame.setOutlineColor(Color::Cyan);
+        gemFrame.setOutlineThickness(2);
+        window.draw(gemFrame);
+
+        Texture gemTexture;
+        if (gemTexture.loadFromFile("assets/spritesheet.png")) {
+            Sprite gemSprite;
+            gemSprite.setTexture(gemTexture);
+
+            gemSprite.setTextureRect(IntRect(gemKind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
+
+            gemSprite.setPosition(472, 538);
+
+            window.draw(gemSprite);
+        }
+
+        Text targetLabel;
+        targetLabel.setFont(font);
+        targetLabel.setString("Target:");
+        targetLabel.setCharacterSize(40);
+        targetLabel.setFillColor(Color::White);
+        targetLabel.setOutlineColor(Color::Black);
+        targetLabel.setOutlineThickness(2);
+        targetLabel.setPosition(350, 535);
+        window.draw(targetLabel);
+    }
 }

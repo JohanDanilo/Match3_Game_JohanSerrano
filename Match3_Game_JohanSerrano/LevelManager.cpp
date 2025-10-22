@@ -28,7 +28,7 @@ void LevelManager::reset() {
 }
 
 void LevelManager::createLevel1() {
-    Objective* obj1 = new Objective(ObjectiveType::CollectGems, 20, 0);
+    Objective* obj1 = new Objective(ObjectiveType::CollectGems, 30, 0);
     Level* level1 = new Level(1, 20, obj1);
     level1->setObstacleCount(0);
     levels.push_back(level1);
