@@ -13,17 +13,16 @@ Board::~Board() {
             grid[r][c] = nullptr;
         }
     }
+    clearObstacles();
 }
 
 void Board::initialize() {
     srand(static_cast<unsigned int>(time(0)));
-
     int totalCells = ROWS * COLS;
 
     for (int idx = 0; idx < totalCells; idx++) {
         int i = idx / COLS;
         int j = idx % COLS;
-
         int kind = rand() % 5;
 
         while (createsMatch(i, j, kind)) {
@@ -37,24 +36,17 @@ void Board::initialize() {
         Vector2f dest(j * TILE_SIZE + offset.x, i * TILE_SIZE + offset.y);
         grid[i][j]->setDestination(dest);
     }
-
 }
 
-
-
 bool Board::createsMatch(int row, int col, int kind) {
-
     if (col >= 2 && grid[row][col - 1]->getKind() == kind && grid[row][col - 2]->getKind() == kind) {
         return true;
     }
-
     if (row >= 2 && grid[row - 1][col]->getKind() == kind && grid[row - 2][col]->getKind() == kind) {
         return true;
     }
-
     return false;
 }
-
 
 void Board::loadTexture() {
     texture.loadFromFile("assets/spritesheet.png");
@@ -66,6 +58,12 @@ void Board::draw(RenderWindow& window) {
             grid[i][j]->draw(window);
         }
     }
+
+    for (Obstacle* obs : obstacles) {
+        if (obs && !obs->isDestroyedState()) {
+            obs->draw(window);
+        }
+    }
 }
 
 bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
@@ -75,7 +73,14 @@ bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
 
 bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
     if (row1 < 0 || row1 >= ROWS || col1 < 0 || col1 >= COLS ||
-        row2 < 0 || row2 >= ROWS || col2 < 0 || col2 >= COLS) { return false; }
+        row2 < 0 || row2 >= ROWS || col2 < 0 || col2 >= COLS) {
+        return false;
+    }
+
+    if (hasObstacleAt(row1, col1) || hasObstacleAt(row2, col2)) {
+        return false;
+    }
+
     if (!areAdjacent(row1, col1, row2, col2)) { return false; }
 
     firstRow = row1; firstCol = col1;
@@ -106,25 +111,20 @@ void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     case Idle:
         handleIdleState();
         break;
-
     case Swapping:
         handleSwappingState(deltaTime, moveConsumed);
         break;
-
     case Reverting:
         handleRevertingState(deltaTime);
         break;
-
     case Scoring:
         handleScoringState(deltaTime, scoreGained, moveConsumed);
         break;
-
     case Moving:
         handleMovingState(deltaTime);
         break;
     }
 }
-
 
 void Board::handleIdleState() {
     findMatches();
@@ -180,7 +180,6 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
             }
         }
 
-
         findMatches();
         if (checkAnyMatch()) {
             triggerDisappearance();
@@ -192,7 +191,6 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
     }
 }
 
-
 void Board::handleRevertingState(float deltaTime) {
     bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
     bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
@@ -203,7 +201,6 @@ void Board::handleRevertingState(float deltaTime) {
         state = Idle;
     }
 }
-
 
 void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed) {
     bool anyStillAnimating = false;
@@ -227,7 +224,6 @@ void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveCons
         state = Moving;
     }
 }
-
 
 void Board::handleMovingState(float deltaTime) {
     bool stillMoving = false;
@@ -253,7 +249,6 @@ void Board::handleMovingState(float deltaTime) {
     }
 }
 
-
 bool Board::checkAnyMatch() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
@@ -265,7 +260,6 @@ bool Board::checkAnyMatch() {
     return false;
 }
 
-
 void Board::triggerDisappearance() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
@@ -275,7 +269,6 @@ void Board::triggerDisappearance() {
         }
     }
 }
-
 
 void Board::revertSwap() {
     swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
@@ -290,7 +283,6 @@ void Board::revertSwap() {
     playerInitiatedMove = false;
     state = Reverting;
 }
-
 
 void Board::findMatches() {
     for (int r = 0; r < ROWS; r++) {
@@ -328,7 +320,6 @@ void Board::checkLineMatches(bool horizontal) {
             int prev = grid[r0][c0]->getKind();
 
             bool bothNormal = (grid[r1][c1]->getType() == "Normal" && grid[r0][c0]->getType() == "Normal");
-
             bool same = (cur >= 0 && prev >= 0 && cur == prev && bothNormal);
 
             if (same) {
@@ -348,15 +339,12 @@ void Board::checkLineMatches(bool horizontal) {
     }
 }
 
-
 void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
     int startIndex = lastIndex - count + 1;
-
     int destRow = -1;
     int destCol = -1;
 
     if (count >= 4) {
-
         auto inSequence = [&](int r, int c) -> bool {
             if (horizontal) {
                 return (r == outer && c >= startIndex && c <= lastIndex);
@@ -405,16 +393,19 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
 
         matches[r][c] = true;
     }
-
 }
-
-
 
 int Board::clearMatches() {
     int score = 0;
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
             if (matches[r][c]) {
+                // Actualizar objetivos cuando se elimina una gema
+                updateObjectivesOnMatch(r, c);
+
+                // Dañar obstáculos adyacentes
+                damageAdjacentObstacles(r, c);
+
                 grid[r][c]->setKind(-1);
                 grid[r][c]->getSprite().setColor(Color(255, 255, 255, 0));
                 score += 10;
@@ -424,10 +415,68 @@ int Board::clearMatches() {
     return score;
 }
 
+void Board::updateObjectivesOnMatch(int row, int col) {
+    if (!currentLevel) return;
+
+    Objective* objective = currentLevel->getObjective();
+    if (!objective) return;
+
+    Gem* gem = grid[row][col];
+    if (!gem) return;
+
+    int gemKind = gem->getKind();
+
+    // Actualizar objetivo si es de recolección de gemas del color correcto
+    if (objective->getType() == ObjectiveType::CollectGems) {
+        if (objective->getGemKind() == gemKind) {
+            objective->addProgress(1);
+        }
+    }
+}
+
+void Board::damageAdjacentObstacles(int row, int col) {
+    // Direcciones: arriba, abajo, izquierda, derecha
+    int dr[] = { -1, 1, 0, 0 };
+    int dc[] = { 0, 0, -1, 1 };
+
+    for (int i = 0; i < 4; i++) {
+        int nr = row + dr[i];
+        int nc = col + dc[i];
+
+        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+            for (Obstacle* obs : obstacles) {
+                if (obs && !obs->isDestroyedState()) {
+                    if (obs->getRow() == nr && obs->getCol() == nc) {
+                        obs->takeDamage();
+
+                        // Si el obstáculo fue destruido, actualizar objetivo
+                        if (obs->isDestroyedState() && currentLevel) {
+                            Objective* objective = currentLevel->getObjective();
+                            if (objective && objective->getType() == ObjectiveType::ClearObstacles) {
+                                objective->addProgress(1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool Board::hasObstacleAt(int row, int col) const {
+    for (Obstacle* obs : obstacles) {
+        if (obs && !obs->isDestroyedState()) {
+            if (obs->getRow() == row && obs->getCol() == col) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Board::applyGravity() {
     for (int c = 0; c < COLS; c++) {
         for (int r = ROWS - 1; r >= 0; r--) {
-
             Gem* current = grid[r][c];
             if (!current || current->getKind() != -1) {
                 continue;
@@ -457,18 +506,18 @@ void Board::applyGravity() {
     }
 }
 
-
 void Board::refill() {
-
     for (int c = 0; c < COLS; c++) {
         for (int r = ROWS - 1; r >= 0; r--) {
             if (grid[r][c]->getKind() != -1) {
                 continue;
             }
-            spawnGem(r, c);
+            // No generar gemas donde hay obstáculos
+            if (!hasObstacleAt(r, c)) {
+                spawnGem(r, c);
+            }
         }
     }
-
 }
 
 void Board::spawnGem(int r, int c) {
@@ -482,14 +531,12 @@ void Board::spawnGem(int r, int c) {
     Vector2f spawn(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
     grid[r][c]->getSprite().setPosition(spawn);
 
-    Vector2f destination(c * TILE_SIZE + offset.x,
-        r * TILE_SIZE + offset.y);
+    Vector2f destination(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
     grid[r][c]->setDestination(destination);
 }
 
 void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
-
     if (!grid[row][col]) return;
 
     int kind = grid[row][col]->getKind();
@@ -512,7 +559,6 @@ void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     grid[row][col]->getSprite().setPosition(dest);
     grid[row][col]->setDestination(dest);
 }
-
 
 int Board::getState() const {
     return static_cast<int>(state);
@@ -538,5 +584,47 @@ void Board::activateIceEffect(int row) {
     for (int c = 0; c < COLS; ++c) {
         grid[row][c]->startDisappearing();
         matches[row][c] = true;
+    }
+}
+
+void Board::setCurrentLevel(Level* level) {
+    currentLevel = level;
+}
+
+void Board::placeObstacles(int count) {
+    clearObstacles();
+
+    for (int i = 0; i < count; i++) {
+        bool placed = false;
+        int attempts = 0;
+
+        while (!placed && attempts < 50) {
+            int r = rand() % ROWS;
+            int c = rand() % COLS;
+
+            // No colocar obstáculos donde ya hay uno
+            if (!hasObstacleAt(r, c)) {
+                IronBlock* iron = new IronBlock(r, c);  // Usa tu IronBlock
+                obstacles.push_back(iron);
+                placed = true;
+            }
+            attempts++;
+        }
+    }
+}
+
+void Board::clearObstacles() {
+    for (Obstacle* obs : obstacles) {
+        delete obs;
+    }
+    obstacles.clear();
+}
+
+void Board::updateScoreObjective(int scoreGained) {
+    if (!currentLevel) return;
+
+    Objective* objective = currentLevel->getObjective();
+    if (objective && objective->getType() == ObjectiveType::ReachScore) {
+        objective->addProgress(scoreGained);
     }
 }

@@ -25,16 +25,16 @@ void LevelManager::createLevel1() {
 }
 
 void LevelManager::createLevel2() {
-    Objective* obj2 = new Objective(ObjectiveType::CollectGems, 20, 2);
-    Level* level2 = new Level(2, 25, obj2);
-    level2->setObstacleCount(3);
+    Objective* obj2 = new Objective(ObjectiveType::ReachScore, 1000, 2);
+    Level* level2 = new Level(2, 20, obj2);
+    level2->setObstacleCount(5);
     levels.push_back(level2);
 }
 
 void LevelManager::createLevel3() {
-    Objective* obj3 = new Objective(ObjectiveType::ClearObstacles, 20, 5);
-    Level* level3 = new Level(3, 30, obj3);
-    level3->setObstacleCount(5);
+    Objective* obj3 = new Objective(ObjectiveType::ClearObstacles, 10, 5);
+    Level* level3 = new Level(3, 20, obj3);
+    level3->setObstacleCount(10);
     levels.push_back(level3);
 }
 

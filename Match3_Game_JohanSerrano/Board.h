@@ -3,11 +3,13 @@
 #include "NormalGem.h"
 #include "BombGem.h"
 #include "IceGem.h"
+#include "Obstacle.h"
+#include "Level.h"
 #include <SFML/Graphics.hpp>
 #include <ctime>
 #include <cstdlib>
 #include <cmath>
-
+#include <vector>
 
 using namespace sf;
 using namespace std;
@@ -22,6 +24,7 @@ private:
 
     Gem* grid[ROWS][COLS];
     bool matches[ROWS][COLS] = { false };
+    vector<Obstacle*> obstacles;
 
     Gem* firstGem = nullptr;
     Gem* secondGem = nullptr;
@@ -35,6 +38,7 @@ private:
     Vector2f swapOrigPos1;
     Vector2f swapOrigPos2;
 
+    Level* currentLevel = nullptr;
 
     void revertSwap();
 
@@ -46,8 +50,11 @@ private:
     void refill();
 
     void spawnGem(int r, int c);
-
     void spawnSpecialGem(int row, int col, bool horizontal);
+
+    void updateObjectivesOnMatch(int row, int col);
+    void damageAdjacentObstacles(int row, int col);
+    bool hasObstacleAt(int row, int col) const;
 
 public:
     Board();
@@ -64,23 +71,22 @@ public:
     void update(float deltaTime, int& scoreGained, bool& moveConsumed);
 
     void handleIdleState();
-
     void handleSwappingState(float deltaTime, bool& moveConsumed);
-
     void handleRevertingState(float deltaTime);
-
     void handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed);
-
     void handleMovingState(float deltaTime);
 
     bool checkAnyMatch();
-
     void triggerDisappearance();
 
     int getState() const;
     Gem* getGem(int row, int col);
 
     void activateBombEffect(int row, int col);
-
     void activateIceEffect(int row);
+
+    void setCurrentLevel(Level* level);
+    void placeObstacles(int count);
+    void clearObstacles();
+    void updateScoreObjective(int scoreGained);
 };

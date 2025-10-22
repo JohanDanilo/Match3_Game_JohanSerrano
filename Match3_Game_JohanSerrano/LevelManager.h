@@ -6,7 +6,7 @@ using namespace std;
 class LevelManager {
 private:
     vector<Level*> levels;
-    int currentLevelIndex;
+    int currentLevelIndex = 0;
 
     void createLevel1();
     void createLevel2();

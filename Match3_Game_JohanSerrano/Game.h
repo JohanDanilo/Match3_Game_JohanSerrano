@@ -1,17 +1,19 @@
 #pragma once
 
 #include "Board.h"
+#include "LevelManager.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
 using namespace sf;
 using namespace std;
 
-enum class GameState { MainMenu, Playing, GameOver };
+enum class GameState { MainMenu, Playing, GameOver, LevelComplete };
 
 class Game {
 private:
     Board board;
+    LevelManager levelManager;
     int score;
     int moves;
     GameState state;
@@ -29,9 +31,13 @@ private:
     void runMainMenu();
     void runGameLoop();
     void runGameOver();
+    void runLevelComplete();
     void selectGem(RenderWindow& window);
     void refillMoves();
     void clearScore();
+    void startLevel();
+    void drawObjectivesPanel(RenderWindow& window);
+    bool checkLevelCompletion();
 
 public:
     Game();
@@ -39,4 +45,3 @@ public:
     void loadResources();
     void run();
 };
-
