@@ -1,6 +1,7 @@
 #include "Board.h"
 
 Board::Board() {
+    cout << "Inicializando tablero..." << endl;
     loadTexture();
     initialize();
     state = Idle;
@@ -123,7 +124,7 @@ bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
 void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     scoreGained = 0;
     moveConsumed = false;
-
+    //cout << "Estado actual: " << state << endl;
     switch (state) {
     case Idle:
         handleIdleState();
@@ -146,6 +147,7 @@ void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
 void Board::handleIdleState() {
     findMatches();
     if (checkAnyMatch()) {
+        activateSpecialGemsInMatches();
         triggerDisappearance();
         playerInitiatedMove = false;
         state = Scoring;
@@ -157,52 +159,23 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
     bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
 
     if (done1 && done2) {
+        // PASO 1: Hacer el swap
         swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
         grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
         grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
 
-        if (firstGem) {
-            string type1 = firstGem->getType();
-            if (type1 == "Bomb") {
-                activateBombEffect(secondRow, secondCol);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-            else if (type1 == "Ice") {
-                activateIceEffect(secondRow);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-        }
-
-        if (secondGem) {
-            string type2 = secondGem->getType();
-            if (type2 == "Bomb") {
-                activateBombEffect(firstRow, firstCol);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-            else if (type2 == "Ice") {
-                activateIceEffect(firstRow);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-        }
-
+        // PASO 2: Buscar matches DESPUÉS del swap
         findMatches();
+
+        // PASO 3: Si hay matches, verificar si alguna gema especial participa
         if (checkAnyMatch()) {
+            activateSpecialGemsInMatches();  // Usar el método helper
             triggerDisappearance();
             state = Scoring;
         }
         else {
+            // NO HAY MATCH: Revertir el swap
+            cout << "[DEBUG] No hay matches, revirtiendo swap" << endl;
             revertSwap();
         }
     }
@@ -256,6 +229,9 @@ void Board::handleMovingState(float deltaTime) {
     if (!stillMoving) {
         findMatches();
         if (checkAnyMatch()) {
+
+            activateSpecialGemsInMatches();  // Activar efectos especiales cuando caen gemas
+
             triggerDisappearance();
             playerInitiatedMove = false;
             state = Scoring;
@@ -337,7 +313,7 @@ void Board::checkLineMatches(bool horizontal) {
             int prev = grid[r0][c0]->getKind();
 
             bool bothNormal = (grid[r1][c1]->getType() == "Normal" && grid[r0][c0]->getType() == "Normal");
-            bool same = (cur >= 0 && prev >= 0 && cur == prev && bothNormal);
+            bool same = (cur == prev);
 
             if (same) {
                 count++;
@@ -655,4 +631,24 @@ void Board::clearCurrentLevel() {
         }
     }
     obstacles.clear();
+}
+
+void Board::activateSpecialGemsInMatches() {
+    // Recorrer todas las celdas que tienen matches
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (matches[r][c] && grid[r][c]) {
+                string type = grid[r][c]->getType();
+
+                if (type == "Bomb") {
+                    cout << "[SPECIAL AUTO] Activando Bomb en (" << r << ", " << c << ")" << endl;
+                    activateBombEffect(r, c);
+                }
+                else if (type == "Ice") {
+                    cout << "[SPECIAL AUTO] Activando Ice en fila " << r << endl;
+                    activateIceEffect(r);
+                }
+            }
+        }
+    }
 }

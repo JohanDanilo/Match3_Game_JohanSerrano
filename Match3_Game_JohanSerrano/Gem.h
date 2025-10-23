@@ -30,7 +30,6 @@ protected:
 
 public:
     Gem();
-    Gem(int aKind, int aRow, int aColumn);
     virtual ~Gem();
 
     virtual void setSprite(Texture& texture);
