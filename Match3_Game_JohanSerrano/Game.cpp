@@ -17,16 +17,19 @@ void Game::loadResources() {
     if (!mainMenuTexture.loadFromFile("assets/mainMenu.png")) {
         cerr << "Error loading mainMenu.png\n";
     }
+    // NOTE: Always use brackets in for or if statements block 
     else mainMenuSprite.setTexture(mainMenuTexture);
 
     if (!backgroundTexture.loadFromFile("assets/background.png")) {
         cerr << "Error loading background.png\n";
     }
+    // NOTE: Always use brackets in for or if statements block 
     else backgroundSprite.setTexture(backgroundTexture);
 
     if (!gameOverTexture.loadFromFile("assets/gameOver.png")) {
         cerr << "Error loading gameOver.png\n";
     }
+    // NOTE: Always use brackets in for or if statements block 
     else gameOverSprite.setTexture(gameOverTexture);
 }
 
@@ -59,6 +62,7 @@ void Game::runMainMenu() {
     while (window.isOpen() && state == GameState::MainMenu) {
         Event event;
         while (window.pollEvent(event)) {
+            // NOTE: Code too nested
             if (event.type == Event::Closed) {
                 window.close();
                 running = false;
@@ -128,6 +132,7 @@ void Game::runGameLoop() {
 
         Event event;
         while (window.pollEvent(event)) {
+            // NOTE: Code too nested
             if (event.type == Event::Closed) {
                 window.close();
                 running = false;
@@ -164,6 +169,7 @@ void Game::runGameLoop() {
         window.display();
 
         if (moves <= 0 && board.getState() == 0) {
+            // NOTE: Code too nested
             if (checkLevelCompletion()) {
                 state = GameState::LevelComplete;
             }
@@ -181,9 +187,11 @@ void Game::runGameLoop() {
 
 void Game::drawObjectivesPanel(RenderWindow& window) {
     Level* currentLevel = levelManager.getCurrentLevel();
+    // NOTE: Always use brackets in for or if statements block 
     if (!currentLevel) return;
 
     Objective* objective = currentLevel->getObjective();
+    // NOTE: Always use brackets in for or if statements block 
     if (!objective) return;
 
     RectangleShape panel(Vector2f(310, 60));
@@ -253,6 +261,7 @@ void Game::drawObjectivesPanel(RenderWindow& window) {
 
 bool Game::checkLevelCompletion() {
     Level* currentLevel = levelManager.getCurrentLevel();
+    // NOTE: Always use brackets in for or if statements block   
     if (!currentLevel) return false;
 
     return currentLevel->isLevelComplete();
@@ -323,6 +332,7 @@ void Game::runLevelComplete() {
     while (window.isOpen() && waiting) {
         Event e;
         while (window.pollEvent(e)) {
+            // NOTE: Code too nested
             if (e.type == Event::Closed) {
                 window.close();
                 running = false;
@@ -392,6 +402,7 @@ void Game::runGameOver() {
     while (window.isOpen()) {
         Event e;
         while (window.pollEvent(e)) {
+            // NOTE: Code too nested
             if (e.type == Event::Closed) {
                 window.close();
                 running = false;

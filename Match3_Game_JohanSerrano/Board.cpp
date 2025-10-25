@@ -20,6 +20,7 @@ void Board::initialize() {
 
     for (int r = 0; r < ROWS; ++r) {
         for (int c = 0; c < COLS; ++c) {
+            // NOTE: Code too nested
             if (grid[r][c] != nullptr) {
                 delete grid[r][c];
                 grid[r][c] = nullptr;
@@ -66,6 +67,7 @@ bool Board::createsMatch(int row, int col, int kind) {
 }
 
 void Board::loadTexture() {
+    // NOTE: Complete this code with try catch, it is important deal with errors
     texture.loadFromFile("assets/spritesheet.png");
 }
 
@@ -89,6 +91,7 @@ bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
 }
 
 bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
+    // NOTE: use var to define the complex evaluation
     if (row1 < 0 || row1 >= ROWS || col1 < 0 || col1 >= COLS ||
         row2 < 0 || row2 >= ROWS || col2 < 0 || col2 >= COLS) {
         return false;
@@ -163,6 +166,7 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
 
         if (firstGem) {
             string type1 = firstGem->getType();
+            // NOTE: Code too nested
             if (type1 == "Bomb") {
                 activateBombEffect(secondRow, secondCol);
                 playerInitiatedMove = false;
@@ -181,6 +185,7 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
 
         if (secondGem) {
             string type2 = secondGem->getType();
+            // NOTE: Code too nested
             if (type2 == "Bomb") {
                 activateBombEffect(firstRow, firstCol);
                 playerInitiatedMove = false;
@@ -224,6 +229,7 @@ void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveCons
 
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
+            // NOTE: Code too nested
             if (grid[r][c]->getDisappearingState()) {
                 if (grid[r][c]->dissapear(deltaTime)) {
                     anyStillAnimating = true;
@@ -247,6 +253,7 @@ void Board::handleMovingState(float deltaTime) {
 
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
+            // NOTE: Code too nested
             if (!grid[r][c]->moveGem(deltaTime)) {
                 stillMoving = true;
             }
@@ -269,6 +276,7 @@ void Board::handleMovingState(float deltaTime) {
 bool Board::checkAnyMatch() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
+            // NOTE: Code too nested
             if (matches[r][c]) {
                 return true;
             }
@@ -280,6 +288,7 @@ bool Board::checkAnyMatch() {
 void Board::triggerDisappearance() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
+            // NOTE: Code too nested
             if (matches[r][c]) {
                 grid[r][c]->startDisappearing();
             }
@@ -326,6 +335,7 @@ void Board::checkLineMatches(bool horizontal) {
             int c0 = horizontal ? inner - 1 : outer;
 
             if (!grid[r1][c1] || !grid[r0][c0]) {
+                // NOTE: Code too nested
                 if (count >= 3) {
                     markMatches(horizontal, outer, inner - 1, count);
                 }
@@ -416,6 +426,7 @@ int Board::clearMatches() {
     int score = 0;
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
+            // NOTE: Code too nested
             if (matches[r][c]) {
                 updateObjectivesOnMatch(r, c);
 
@@ -457,6 +468,7 @@ void Board::damageAdjacentObstacles(int row, int col) {
         int nc = col + dc[i];
 
         if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+            // NOTE: Code too nested
             for (Obstacle* obs : obstacles) {
                 if (obs && !obs->isDestroyedState()) {
                     if (obs->getRow() == nr && obs->getCol() == nc) {
@@ -478,6 +490,7 @@ void Board::damageAdjacentObstacles(int row, int col) {
 bool Board::hasObstacleAt(int row, int col) const {
     for (Obstacle* obs : obstacles) {
         if (obs && !obs->isDestroyedState()) {
+            // NOTE: Code too nested
             if (obs->getRow() == row && obs->getCol() == col) {
                 return true;
             }
@@ -490,11 +503,13 @@ void Board::applyGravity() {
     for (int c = 0; c < COLS; c++) {
         for (int r = ROWS - 1; r >= 0; r--) {
             Gem* current = grid[r][c];
+            // NOTE: Code too nested
             if (!current || current->getKind() != -1) {
                 continue;
             }
 
             int above = r - 1;
+            // NOTE: Code too nested
             while (above >= 0) {
                 Gem* upper = grid[above][c];
                 if (upper && upper->getKind() != -1) {
@@ -521,6 +536,7 @@ void Board::applyGravity() {
 void Board::refill() {
     for (int c = 0; c < COLS; c++) {
         for (int r = ROWS - 1; r >= 0; r--) {
+            // NOTE: Code too nested
             if (grid[r][c]->getKind() != -1) {
                 continue;
             }
@@ -590,6 +606,7 @@ void Board::activateBombEffect(int row, int col) {
     const int RADIUS = 1;
     for (int r = row - RADIUS; r <= row + RADIUS; ++r) {
         for (int c = col - RADIUS; c <= col + RADIUS; ++c) {
+            // NOTE: Code too nested
             if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
                 grid[r][c]->startDisappearing();
                 matches[r][c] = true;
@@ -620,6 +637,7 @@ void Board::placeObstacles(int count) {
             int r = rand() % ROWS;
             int c = rand() % COLS;
 
+            // NOTE: Code too nested
             if (!hasObstacleAt(r, c)) {
                 IronBlock* iron = new IronBlock(r, c);
                 obstacles.push_back(iron);
