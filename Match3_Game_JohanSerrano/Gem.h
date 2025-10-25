@@ -37,10 +37,12 @@ public:
 
     virtual void draw(RenderWindow& window) = 0;
 
+    // NOTE: Remove dead Code
     //virtual void onMatch(Board& board, int row, int col);
-
+    
     virtual string getType() const = 0;
-
+    
+    // NOTE: Remove dead Code
     //virtual Gem* clone() const;
 
     void setKind(int aType);
