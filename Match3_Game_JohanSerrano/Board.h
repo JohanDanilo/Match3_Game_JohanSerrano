@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 using namespace sf;
 using namespace std;
@@ -91,4 +92,5 @@ public:
     void updateScoreObjective(int scoreGained);
 
     void clearCurrentLevel();
+    void activateSpecialGemsInMatches();
 };
