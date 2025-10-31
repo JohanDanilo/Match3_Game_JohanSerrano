@@ -1,7 +1,7 @@
 #include "Board.h"
 
 Board::Board() {
-    cout << "Inicializando tablero..." << endl;
+	cout << "Inicializando tablero..." << endl;
     loadTexture();
     initialize();
     state = Idle;
@@ -127,7 +127,6 @@ bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
 void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     scoreGained = 0;
     moveConsumed = false;
-    //cout << "Estado actual: " << state << endl;
     switch (state) {
     case Idle:
         handleIdleState();
@@ -162,61 +161,20 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
     bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
 
     if (done1 && done2) {
-        // PASO 1: Hacer el swap
         swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
         grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
         grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
 
-        if (firstGem) {
-            string type1 = firstGem->getType();
-            // NOTE: Code too nested
-            if (type1 == "Bomb") {
-                activateBombEffect(secondRow, secondCol);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-            else if (type1 == "Ice") {
-                activateIceEffect(secondRow);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-        }
-
-        if (secondGem) {
-            string type2 = secondGem->getType();
-            // NOTE: Code too nested
-            if (type2 == "Bomb") {
-                activateBombEffect(firstRow, firstCol);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-            else if (type2 == "Ice") {
-                activateIceEffect(firstRow);
-                playerInitiatedMove = false;
-                moveConsumed = true;
-                state = Scoring;
-                return;
-            }
-        }
-
-        // PASO 2: Buscar matches DESPUÉS del swap
         findMatches();
 
-        // PASO 3: Si hay matches, verificar si alguna gema especial participa
         if (checkAnyMatch()) {
-            activateSpecialGemsInMatches();  // Usar el método helper
+			activateSpecialGemsInMatches();
             triggerDisappearance();
             state = Scoring;
         }
         else {
-            // NO HAY MATCH: Revertir el swap
-            cout << "[DEBUG] No hay matches, revirtiendo swap" << endl;
+			// NO HAY MATCH: Revertir el swap
+			cout << "[DEBUG] No hay matches, revirtiendo swap" << endl;
             revertSwap();
         }
     }
@@ -273,7 +231,7 @@ void Board::handleMovingState(float deltaTime) {
         findMatches();
         if (checkAnyMatch()) {
 
-            activateSpecialGemsInMatches();  // Activar efectos especiales cuando caen gemas
+			activateSpecialGemsInMatches();
 
             triggerDisappearance();
             playerInitiatedMove = false;
@@ -358,7 +316,6 @@ void Board::checkLineMatches(bool horizontal) {
             int cur = grid[r1][c1]->getKind();
             int prev = grid[r0][c0]->getKind();
 
-            bool bothNormal = (grid[r1][c1]->getType() == "Normal" && grid[r0][c0]->getType() == "Normal");
             bool same = (cur == prev);
 
             if (same) {
@@ -383,14 +340,25 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
     int destRow = -1;
     int destCol = -1;
 
-    if (count >= 4) {
+    // --- PASO 1: detectar si hay gemas especiales en la secuencia ---
+    bool containsSpecial = false;
+    for (int k = 0; k < count; k++) {
+        int r = horizontal ? outer : lastIndex - k;
+        int c = horizontal ? lastIndex - k : outer;
+
+        if (grid[r][c] && grid[r][c]->getType() != "Normal") {
+            containsSpecial = true;
+            break;
+        }
+    }
+
+    // --- PASO 2: calcular la posición donde nacería la especial ---
+    if (count >= 4 && !containsSpecial) { // solo si NO hay especiales
         auto inSequence = [&](int r, int c) -> bool {
-            if (horizontal) {
+            if (horizontal)
                 return (r == outer && c >= startIndex && c <= lastIndex);
-            }
-            else {
+            else
                 return (c == outer && r >= startIndex && r <= lastIndex);
-            }
             };
 
         if (playerInitiatedMove) {
@@ -415,20 +383,22 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
             }
         }
 
-        spawnSpecialGem(destRow, destCol, horizontal);
+        // Crear la gema especial solo si la celda es Normal
+        if (grid[destRow][destCol] && grid[destRow][destCol]->getType() == "Normal") {
+            spawnSpecialGem(destRow, destCol, horizontal);
+        }
     }
 
+    // --- PASO 4: marcar las demás gemas del match para eliminar ---
     for (int k = 0; k < count; ++k) {
         int r = horizontal ? outer : lastIndex - k;
         int c = horizontal ? lastIndex - k : outer;
 
-        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS)
             continue;
-        }
 
-        if (r == destRow && c == destCol) {
+        if (r == destRow && c == destCol)
             continue;
-        }
 
         matches[r][c] = true;
     }
@@ -439,7 +409,12 @@ int Board::clearMatches() {
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
             // NOTE: Code too nested
-            if (matches[r][c]) {
+            if (matches[r][c] && grid[r][c]) {
+
+                cout << "[DELETE] Eliminando gema en (" << r << "," << c << ") PTR: "
+                    << grid[r][c] << " Kind: " << grid[r][c]->getKind()
+                    << " Tipo: " << grid[r][c]->getType() << endl;
+
                 updateObjectivesOnMatch(r, c);
 
                 damageAdjacentObstacles(r, c);
@@ -512,38 +487,78 @@ bool Board::hasObstacleAt(int row, int col) const {
 }
 
 void Board::applyGravity() {
-    for (int c = 0; c < COLS; c++) {
-        for (int r = ROWS - 1; r >= 0; r--) {
+    cout << "\n[GRAVITY] Aplicando gravedad...\n";
+
+    for (int c = 0; c < COLS; ++c) {
+        for (int r = ROWS - 1; r >= 0; --r) {
+
             Gem* current = grid[r][c];
-            // NOTE: Code too nested
-            if (!current || current->getKind() != -1) {
+
+            // Si la celda ya está ocupada por una gema viva, saltar
+            if (current && current->getKind() != -1) {
                 continue;
             }
 
+            // Buscar la primera gema viva arriba que pueda caer
             int above = r - 1;
-            // NOTE: Code too nested
             while (above >= 0) {
+
                 Gem* upper = grid[above][c];
-                if (upper && upper->getKind() != -1) {
-                    swap(grid[r][c], grid[above][c]);
 
-                    Gem* fallingGem = grid[r][c];
-                    fallingGem->resetTransientState();
-                    fallingGem->setGridPositions(r, c);
-                    Vector2f dest(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
-                    fallingGem->setDestination(dest);
-
-                    grid[above][c]->setKind(-1);
-                    grid[above][c]->getSprite().setPosition(
-                        c * TILE_SIZE + offset.x, above * TILE_SIZE + offset.y);
-                    grid[above][c]->getSprite().setColor(Color(255, 255, 255, 0));
-                    break;
+                if (!upper) {
+                    // No hay gema arriba, seguir buscando
+                    above--;
+                    continue;
                 }
-                above--;
+
+                if (upper->getKind() == -1) {
+                    // Gema muerta: continuar buscando más arriba
+                    above--;
+                    continue;
+                }
+
+                // Gema válida encontrada → hacerla caer
+                swap(grid[r][c], grid[above][c]);
+
+                Gem* fallingGem = grid[r][c];
+                fallingGem->resetTransientState();
+                fallingGem->setGridPositions(r, c);
+
+                Vector2f dest(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
+                fallingGem->setDestination(dest);
+
+                cout << "[MOVE] Gema bajando de (" << above << "," << c << ") a (" << r << "," << c << ") "
+                    << "PTR: " << fallingGem
+                    << " Kind: " << fallingGem->getKind()
+                    << " Tipo: " << fallingGem->getType() << endl;
+
+                // Marcar la celda original como vacía
+                grid[above][c]->setKind(-1);
+                grid[above][c]->getSprite().setPosition(
+                    c * TILE_SIZE + offset.x, above * TILE_SIZE + offset.y);
+                grid[above][c]->getSprite().setColor(Color(255, 255, 255, 0));
+                break;
+            }
+
+            // Si no se encontró ninguna gema viva arriba
+            if (above < 0) {
+                // Dejar la celda lista para refill
+                if (grid[r][c]) {
+                    grid[r][c]->setKind(-1);
+                    grid[r][c]->getSprite().setColor(Color(255, 255, 255, 0));
+                }
+                else {
+                    grid[r][c] = nullptr;
+                }
+
+                cout << "[EMPTY] Celda vacía en (" << r << "," << c << "), lista para refill\n";
             }
         }
     }
+
+    cout << "[GRAVITY] Finalizado.\n";
 }
+
 
 void Board::refill() {
     for (int c = 0; c < COLS; c++) {
@@ -564,32 +579,57 @@ void Board::refill() {
 
 
 void Board::spawnGem(int r, int c) {
+    // Si ya existe una gema "muerta" (-1), eliminar antes de crear una nueva
+    if (grid[r][c]) {
+        delete grid[r][c];
+        grid[r][c] = nullptr;
+    }
+
+    // Crear una gema normal aleatoria
     int kind = rand() % 5;
     grid[r][c] = new NormalGem(kind, r, c);
-    grid[r][c]->setSprite(texture);
 
+    // Asignar textura y restablecer estado transitorio
+    grid[r][c]->setSprite(texture);
     grid[r][c]->resetTransientState();
     grid[r][c]->setGridPositions(r, c);
 
+    // Posición inicial: aparece desde arriba del tablero
     Vector2f spawn(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
     grid[r][c]->getSprite().setPosition(spawn);
 
+    // Posición final (destino)
     Vector2f destination(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
     grid[r][c]->setDestination(destination);
+
+    // DEBUG
+    cout << "[SPAWN] Nueva gema creada en (" << r << "," << c << ") "
+        << "PTR: " << grid[r][c]
+        << " Kind: " << grid[r][c]->getKind()
+        << " Tipo: " << grid[r][c]->getType() << endl;
 }
+
 
 void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
 
-    if (!grid[row][col]) return;
+    Gem* target = grid[row][col];
+    if (!target) return;
 
-    int kind = grid[row][col]->getKind();
-
-    if (grid[row][col] != nullptr) {
-        delete grid[row][col];
-        grid[row][col] = nullptr;
+    // Si la gema ya es especial, no volver a crearla
+    string currentType = target->getType();
+    if (currentType == "Bomb" || currentType == "Ice") {
+        cout << "[INFO] Gema especial ya existente en (" << row << "," << col << "), no se reemplaza.\n";
+        return;
     }
 
+    int kind = target->getKind();
+
+    // Eliminar la gema anterior (seguro)
+    delete grid[row][col];
+    grid[row][col] = nullptr;
+
+    // Crear la nueva gema especial
     if (horizontal) {
         grid[row][col] = new BombGem(kind, row, col);
     }
@@ -597,6 +637,7 @@ void Board::spawnSpecialGem(int row, int col, bool horizontal) {
         grid[row][col] = new IceGem(kind, row, col);
     }
 
+    // Configurar sprite y posición
     grid[row][col]->setSprite(texture);
     grid[row][col]->resetTransientState();
     grid[row][col]->setGridPositions(row, col);
@@ -604,7 +645,13 @@ void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     Vector2f dest(col * TILE_SIZE + offset.x, row * TILE_SIZE + offset.y);
     grid[row][col]->getSprite().setPosition(dest);
     grid[row][col]->setDestination(dest);
+
+    cout << "[SPAWN SPECIAL] Nueva gema especial en (" << row << "," << col << ") "
+        << "Tipo: " << grid[row][col]->getType()
+        << " Kind: " << grid[row][col]->getKind()
+        << " PTR: " << grid[row][col] << endl;
 }
+
 
 int Board::getState() const {
     return static_cast<int>(state);
