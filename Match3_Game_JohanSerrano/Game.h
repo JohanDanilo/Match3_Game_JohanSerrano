@@ -2,6 +2,8 @@
 
 #include "Board.h"
 #include "LevelManager.h"
+#include "ResourceManager.h"
+#include "UIManager.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
@@ -14,14 +16,21 @@ class Game {
 private:
     Board board;
     LevelManager levelManager;
+
+    UIManager* uiManager = nullptr;
+
+
     int score;
     int moves;
     GameState state;
     bool running;
 
-    Texture mainMenuTexture, backgroundTexture, gameOverTexture;
-    Sprite mainMenuSprite, backgroundSprite, gameOverSprite;
-    Font font;
+    const Texture* mainMenuTexture;
+    const Texture* backgroundTexture;
+    const Texture* gameOverTexture;
+    const Font* font;
+
+	Sprite mainMenuSprite, backgroundSprite, gameOverSprite;
 
     int firstSelectedRow = -1, firstSelectedCol = -1;
 
@@ -35,7 +44,6 @@ private:
     void selectGem(RenderWindow& window);
     void refillMoves();
     void clearScore();
-    void showGemTargetIfNeed(RenderWindow& window, Objective* anObjective);
     void startLevel();
     void drawObjectivesPanel(RenderWindow& window);
     bool checkLevelCompletion();

@@ -76,7 +76,7 @@ void Gem::setDestination(const Vector2f& aDestination) {
 bool Gem::moveGem(float deltaTime) {
 	if (!isMoving) { return true; }
 
-	const float speed = 400.f;
+	const float speed = 500.f;
 	Vector2f currentPos = sprite.getPosition();
 	Vector2f direction = destination - currentPos;
 	float distance = sqrt(direction.x * direction.x + direction.y * direction.y);

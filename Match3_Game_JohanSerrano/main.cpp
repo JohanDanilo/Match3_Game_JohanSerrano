@@ -1,9 +1,18 @@
-#include <SFML/Graphics.hpp>
-#include "Game.h"
 #include <iostream>
+#include "Game.h"
+using namespace std;
 
 int main() {
-    static Game game;
-    game.init();
+    try {
+        Game game;
+        game.init();
+        game.run();
+    }
+    catch (const exception& e) {
+        cerr << "[FATAL ERROR] " << e.what() << endl;
+        cerr << "Presiona Enter para salir..." << endl;
+        cin.get();
+        return 1;
+    }
     return 0;
 }

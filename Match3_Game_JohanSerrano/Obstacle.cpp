@@ -5,26 +5,11 @@ const int GEM_WIDTH_OBS = 47;
 const int GEM_HEIGHT_OBS = 54;
 const Vector2f offset_obs(171, 70);
 
-static sf::Texture OBSTACLE_TEXTURE;
-static bool OBSTACLE_TEXTURE_LOADED = false;
-
-Obstacle::Obstacle(int aRow, int aCol, int health) {
+Obstacle::Obstacle(int aRow, int aCol, int health){
     row = aRow;
     col = aCol;
     maxHealth = health;
 
-    if (!OBSTACLE_TEXTURE_LOADED) {
-        if (!OBSTACLE_TEXTURE.loadFromFile("assets/obstacle.png")) {
-            std::cerr << "Error loading assets/obstacle.png\n";
-        }
-        else {
-            OBSTACLE_TEXTURE_LOADED = true;
-        }
-    }
-
-    if (OBSTACLE_TEXTURE_LOADED) {
-        sprite.setTexture(OBSTACLE_TEXTURE);
-    }
 }
 
 Obstacle::~Obstacle() {}

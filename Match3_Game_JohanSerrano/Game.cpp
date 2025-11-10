@@ -1,39 +1,76 @@
 #include "Game.h"
+#include "ResourceManager.h"
+#include "UIManager.h"
 
-Game::Game() : score(0), moves(20), state(GameState::MainMenu), running(true) {
-    loadResources();
-}
+using namespace sf;
+using namespace std;
+
+Game::Game() : score(0), moves(20), state(GameState::MainMenu), running(true) { }
 
 void Game::init() {
-    loadResources();
-    run();
+    cout << "[DEBUG] Iniciando Game::init()" << endl;
+
+    try {
+        loadResources();
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] loadResources(): " << e.what() << endl;
+        throw;
+    }
+
+    try {
+        ResourceManager& rm = ResourceManager::instance();
+
+        cout << "[DEBUG] Cargando texturas principales..." << endl;
+        mainMenuTexture = &rm.getTexture("assets/mainMenu.png");
+        backgroundTexture = &rm.getTexture("assets/background.png");
+        gameOverTexture = &rm.getTexture("assets/gameOver.png");
+
+        mainMenuSprite.setTexture(*mainMenuTexture);
+        backgroundSprite.setTexture(*backgroundTexture);
+        gameOverSprite.setTexture(*gameOverTexture);
+
+        cout << "[DEBUG] Cargando fuente y spritesheet..." << endl;
+        font = &rm.getFont("assets/gameFont.ttf");
+        const Texture& gemTex = rm.getTexture("assets/spritesheet.png");
+
+        uiManager = new UIManager(font, gemTex);
+        cout << "[DEBUG] UIManager creado correctamente." << endl;
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] Asignando texturas o creando UIManager: " << e.what() << endl;
+        throw;
+    }
+
+    Level* currentLevel = levelManager.getCurrentLevel();
+    if (currentLevel) {
+        cout << "[DEBUG] Inicializando primer nivel..." << endl;
+        board.initialize();
+        board.setCurrentLevel(currentLevel);
+        board.placeObstacles(currentLevel->getObstacleCount());
+        moves = currentLevel->getMaxMoves();
+        clearScore();
+    }
+
+    cout << "[DEBUG] Game::init() completado exitosamente." << endl;
 }
 
 void Game::loadResources() {
-    if (!font.loadFromFile("assets/gameFont.ttf")) {
-        cerr << "Error loading font\n";
-    }
+    cout << "[DEBUG] Precargando recursos..." << endl;
+    ResourceManager& rm = ResourceManager::instance();
 
-    if (!mainMenuTexture.loadFromFile("assets/mainMenu.png")) {
-        cerr << "Error loading mainMenu.png\n";
-    }
-    // NOTE: Always use brackets in for or if statements block 
-    else mainMenuSprite.setTexture(mainMenuTexture);
+    rm.getTexture("assets/background.png");
+    rm.getTexture("assets/spritesheet.png");
+    rm.getTexture("assets/gameOver.png");
+    rm.getTexture("assets/mainMenu.png");
+    rm.getFont("assets/gameFont.ttf");
 
-    if (!backgroundTexture.loadFromFile("assets/background.png")) {
-        cerr << "Error loading background.png\n";
-    }
-    // NOTE: Always use brackets in for or if statements block 
-    else backgroundSprite.setTexture(backgroundTexture);
-
-    if (!gameOverTexture.loadFromFile("assets/gameOver.png")) {
-        cerr << "Error loading gameOver.png\n";
-    }
-    // NOTE: Always use brackets in for or if statements block 
-    else gameOverSprite.setTexture(gameOverTexture);
+    cout << "[DEBUG] Recursos precargados en memoria." << endl;
 }
 
 void Game::run() {
+    cout << "[DEBUG] Entrando en bucle principal Game::run()" << endl;
+
     while (running) {
         switch (state) {
         case GameState::MainMenu:
@@ -50,9 +87,30 @@ void Game::run() {
             break;
         }
     }
+
+    if (uiManager) {
+        delete uiManager;
+        uiManager = nullptr;
+        cout << "[DEBUG] UIManager eliminado correctamente." << endl;
+    }
+
+    cout << "[DEBUG] Saliendo de Game::run()" << endl;
 }
 
+/* ===================== MAIN MENU ===================== */
+
 void Game::runMainMenu() {
+    cout << "[DEBUG] Entrando a runMainMenu()" << endl;
+
+    if (!mainMenuTexture) {
+        cerr << "[ERROR] mainMenuTexture es null!" << endl;
+        running = false;
+        return;
+    }
+
+    cout << "[DEBUG] Textura del menu cargada: "
+        << mainMenuTexture->getSize().x << "x" << mainMenuTexture->getSize().y << endl;
+
     RenderWindow window(VideoMode(800, 600), "Main Menu");
     window.setFramerateLimit(144);
 
@@ -62,20 +120,22 @@ void Game::runMainMenu() {
     while (window.isOpen() && state == GameState::MainMenu) {
         Event event;
         while (window.pollEvent(event)) {
-            // NOTE: Code too nested
             if (event.type == Event::Closed) {
                 window.close();
                 running = false;
             }
-
             if (event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
+                cout << "[DEBUG] Click en: " << mousePos.x << ", " << mousePos.y << endl;
+
                 if (startButton.contains(mousePos)) {
+                    cout << "[DEBUG] Botón START presionado" << endl;
                     state = GameState::Playing;
                     startLevel();
                     window.close();
                 }
                 else if (exitButton.contains(mousePos)) {
+                    cout << "[DEBUG] Botón EXIT presionado" << endl;
                     window.close();
                     running = false;
                 }
@@ -87,7 +147,11 @@ void Game::runMainMenu() {
     }
 }
 
+/* ===================== START LEVEL ===================== */
+
 void Game::startLevel() {
+    cout << "[DEBUG] Iniciando nuevo nivel..." << endl;
+
     Level* currentLevel = levelManager.getCurrentLevel();
     if (currentLevel) {
         board.initialize();
@@ -95,35 +159,18 @@ void Game::startLevel() {
         board.placeObstacles(currentLevel->getObstacleCount());
         moves = currentLevel->getMaxMoves();
         clearScore();
+
+        cout << "[DEBUG] Nivel iniciado con " << moves << " movimientos." << endl;
     }
 }
 
+/* ===================== GAME LOOP ===================== */
+
 void Game::runGameLoop() {
+    cout << "[DEBUG] Entrando a runGameLoop()" << endl;
+
     RenderWindow window(VideoMode(800, 600), "Match-3 Game!");
     window.setFramerateLimit(144);
-
-    Text scoreText, movesText, levelText;
-
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(40);
-    scoreText.setFillColor(Color::White);
-    scoreText.setOutlineColor(Color::Black);
-    scoreText.setOutlineThickness(2);
-    scoreText.setPosition(70, 8);
-
-    movesText.setFont(font);
-    movesText.setCharacterSize(40);
-    movesText.setFillColor(Color::White);
-    movesText.setOutlineColor(Color::Black);
-    movesText.setOutlineThickness(2);
-    movesText.setPosition(550, 8);
-
-    levelText.setFont(font);
-    levelText.setCharacterSize(40);
-    levelText.setFillColor(Color::White);
-    levelText.setOutlineColor(Color::Black);
-    levelText.setOutlineThickness(2);
-    levelText.setPosition(340, 8);
 
     Clock clock;
 
@@ -132,12 +179,7 @@ void Game::runGameLoop() {
 
         Event event;
         while (window.pollEvent(event)) {
-            // NOTE: Code too nested
-            if (event.type == Event::Closed) {
-                window.close();
-                running = false;
-            }
-
+            if (event.type == Event::Closed) { window.close(); running = false; }
             if (event.type == Event::MouseButtonPressed && isClickInsideBoard(window)) {
                 selectGem(window);
             }
@@ -153,121 +195,47 @@ void Game::runGameLoop() {
         }
         if (moveConsumed) { moves--; }
 
-        scoreText.setString("Score: " + to_string(score));
-        movesText.setString("Moves: " + to_string(moves));
-        levelText.setString("Level " + to_string(levelManager.getCurrentLevelNumber()));
-
+        // === Dibujo ===
         window.clear();
         window.draw(backgroundSprite);
         board.draw(window);
-        window.draw(scoreText);
-        window.draw(movesText);
-        window.draw(levelText);
 
-        drawObjectivesPanel(window);
+        uiManager->update(score, moves, levelManager.getCurrentLevelNumber(),
+            levelManager.getCurrentLevel() ? levelManager.getCurrentLevel()->getObjective() : nullptr);
+        uiManager->draw(window);
 
         window.display();
 
+        // === Cambios de estado ===
         if (moves <= 0 && board.getState() == 0) {
-            // NOTE: Code too nested
-            if (checkLevelCompletion()) {
-                state = GameState::LevelComplete;
-            }
-            else {
-                state = GameState::GameOver;
-            }
+            cout << "[DEBUG] Fin de movimientos, verificando nivel..." << endl;
+            if (checkLevelCompletion()) { state = GameState::LevelComplete; }
+            else { state = GameState::GameOver; }
             window.close();
         }
         else if (checkLevelCompletion()) {
+            cout << "[DEBUG] Nivel completado, cambiando estado." << endl;
             state = GameState::LevelComplete;
             window.close();
         }
     }
+
+    cout << "[DEBUG] Saliendo de runGameLoop()" << endl;
 }
 
-void Game::drawObjectivesPanel(RenderWindow& window) {
-    Level* currentLevel = levelManager.getCurrentLevel();
-    // NOTE: Always use brackets in for or if statements block 
-    if (!currentLevel) return;
-
-    Objective* objective = currentLevel->getObjective();
-    // NOTE: Always use brackets in for or if statements block 
-    if (!objective) return;
-
-    RectangleShape panel(Vector2f(310, 60));
-    panel.setPosition(8, 535);
-    panel.setFillColor(Color(19, 14, 59, 160));
-    panel.setOutlineColor(Color(0, 0, 0));
-    panel.setOutlineThickness(2);
-    window.draw(panel);
-
-    Text title;
-    title.setFont(font);
-    title.setString("Objective");
-    title.setCharacterSize(40);
-    title.setFillColor(Color::Cyan);
-    title.setOutlineColor(Color::Black);
-    title.setOutlineThickness(2);
-    title.setPosition(10, 520);
-    window.draw(title);
-
-
-    Text objText;
-    objText.setFont(font);
-    objText.setCharacterSize(40);
-    objText.setOutlineColor(Color::Black);
-    objText.setOutlineThickness(2);
-    objText.setPosition(10, 540);
-
-    string objStr = "";
-    Color textColor = Color::White;
-
-    switch (objective->getType()) {
-    case ObjectiveType::CollectGems:
-        objStr = "Collect Gems: ";
-        break;
-    case ObjectiveType::ReachScore:
-        objStr = "Score: ";
-        break;
-    case ObjectiveType::ClearObstacles:
-        objStr = "Clear Iron: ";
-        break;
-    }
-
-    objStr += to_string(objective->getCurrentAmount()) + "/" + to_string(objective->getTargetAmount());
-
-    if (objective->isCompleted()) {
-        textColor = Color::Green;
-        objStr += " OK";
-    }
-
-    objText.setString(objStr);
-    objText.setFillColor(textColor);
-    window.draw(objText);
-
-    showGemTargetIfNeed(window, objective);
-
-    RectangleShape progressBg(Vector2f(150, 10));
-    progressBg.setPosition(12, 580);
-    progressBg.setFillColor(Color(50, 50, 50));
-    window.draw(progressBg);
-
-    float progress = objective->getProgress();
-    RectangleShape progressBar(Vector2f(150 * progress, 10));
-    progressBar.setPosition(12, 580);
-    progressBar.setFillColor(objective->isCompleted() ? Color::Green : Color::Cyan);
-    window.draw(progressBar);
-}
+/* ===================== CHECK LEVEL COMPLETION ===================== */
 
 bool Game::checkLevelCompletion() {
     Level* currentLevel = levelManager.getCurrentLevel();
-    // NOTE: Always use brackets in for or if statements block   
     if (!currentLevel) return false;
-
     return currentLevel->isLevelComplete();
 }
 
+/* ===================== LEVEL COMPLETE ===================== */
+
 void Game::runLevelComplete() {
+    cout << "[DEBUG] Ejecutando runLevelComplete()" << endl;
+
     RenderWindow window(VideoMode(800, 600), "Level Complete!");
     window.setFramerateLimit(144);
 
@@ -275,8 +243,7 @@ void Game::runLevelComplete() {
     bg.setFillColor(Color(0, 100, 0, 200));
 
     Text congratsText, scoreDisplayText;
-
-    congratsText.setFont(font);
+    congratsText.setFont(*font);
     congratsText.setString("LEVEL COMPLETE!");
     congratsText.setCharacterSize(50);
     congratsText.setFillColor(Color::Yellow);
@@ -284,7 +251,7 @@ void Game::runLevelComplete() {
     congratsText.setOutlineThickness(3);
     congratsText.setPosition(180, 150);
 
-    scoreDisplayText.setFont(font);
+    scoreDisplayText.setFont(*font);
     scoreDisplayText.setString("Final Score: " + to_string(score));
     scoreDisplayText.setCharacterSize(35);
     scoreDisplayText.setFillColor(Color::White);
@@ -305,8 +272,8 @@ void Game::runLevelComplete() {
     quitButton.setOutlineThickness(3);
 
     Text nextButtonText, quitButtonText;
-    nextButtonText.setFont(font);
-    quitButtonText.setFont(font);
+    nextButtonText.setFont(*font);
+    quitButtonText.setFont(*font);
 
     bool hasNext = levelManager.hasNextLevel();
 
@@ -332,18 +299,11 @@ void Game::runLevelComplete() {
     while (window.isOpen() && waiting) {
         Event e;
         while (window.pollEvent(e)) {
-            // NOTE: Code too nested
-            if (e.type == Event::Closed) {
-                window.close();
-                running = false;
-                waiting = false;
-            }
+            if (e.type == Event::Closed) { window.close(); running = false; waiting = false; }
 
             if (e.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
-
-                
-                if (nextButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                if (nextButton.getGlobalBounds().contains((float)mousePos.x, (float)mousePos.y)) {
                     if (hasNext) {
                         levelManager.nextLevel();
                         state = GameState::Playing;
@@ -355,16 +315,13 @@ void Game::runLevelComplete() {
                         state = GameState::Playing;
                         startLevel();
                     }
-                    window.close();
-                    waiting = false;
+                    window.close(); waiting = false;
                 }
-                
-                else if (quitButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                else if (quitButton.getGlobalBounds().contains((float)mousePos.x, (float)mousePos.y)) {
                     board.clearCurrentLevel();
                     levelManager.reset();
                     state = GameState::MainMenu;
-                    window.close();
-                    waiting = false;
+                    window.close(); waiting = false;
                 }
             }
         }
@@ -380,13 +337,18 @@ void Game::runLevelComplete() {
         window.draw(quitButtonText);
         window.display();
     }
+
+    cout << "[DEBUG] Saliendo de runLevelComplete()" << endl;
 }
 
-void Game::runGameOver() {
-    RenderWindow window(VideoMode(800, 600), "Game Over");
+/* ===================== GAME OVER ===================== */
 
+void Game::runGameOver() {
+    cout << "[DEBUG] Ejecutando runGameOver()" << endl;
+
+    RenderWindow window(VideoMode(800, 600), "Game Over");
     Text finalScore;
-    finalScore.setFont(font);
+    finalScore.setFont(*font);
     finalScore.setCharacterSize(60);
     finalScore.setFillColor(Color::White);
     finalScore.setOutlineColor(Color::Black);
@@ -396,27 +358,16 @@ void Game::runGameOver() {
 
     IntRect restartButton(190, 467, 193, 50);
     IntRect quitButton(454, 467, 193, 50);
-
     bool restart = false;
 
     while (window.isOpen()) {
         Event e;
         while (window.pollEvent(e)) {
-            // NOTE: Code too nested
-            if (e.type == Event::Closed) {
-                window.close();
-                running = false;
-            }
-
+            if (e.type == Event::Closed) { window.close(); running = false; }
             if (e.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
-                if (restartButton.contains(mousePos)) {
-                    restart = true;
-                    window.close();
-                }
-                else if (quitButton.contains(mousePos)) {
-                    window.close();
-                }
+                if (restartButton.contains(mousePos)) { restart = true; window.close(); }
+                else if (quitButton.contains(mousePos)) { window.close(); }
             }
         }
         window.clear();
@@ -426,15 +377,19 @@ void Game::runGameOver() {
     }
 
     if (restart) {
+        cout << "[DEBUG] Reiniciando nivel..." << endl;
         levelManager.resetCurrentLevel();
         startLevel();
         state = GameState::Playing;
     }
     else {
         running = false;
-        window.close();
     }
+
+    cout << "[DEBUG] Saliendo de runGameOver()" << endl;
 }
+
+/* ===================== INPUT HELPERS ===================== */
 
 Vector2f Game::getClickPosition(RenderWindow& window) {
     Vector2i position = Mouse::getPosition(window);
@@ -457,8 +412,7 @@ void Game::selectGem(RenderWindow& window) {
     if (board.getState() != 0) { return; }
 
     if (firstSelectedRow == -1) {
-        firstSelectedRow = row;
-        firstSelectedCol = col;
+        firstSelectedRow = row; firstSelectedCol = col;
     }
     else {
         if (firstSelectedRow == row && firstSelectedCol == col) {
@@ -466,60 +420,15 @@ void Game::selectGem(RenderWindow& window) {
             return;
         }
         bool started = board.trySwapIndices(firstSelectedRow, firstSelectedCol, row, col);
-        if (started) {
-            firstSelectedRow = firstSelectedCol = -1;
-        }
-        else {
-            firstSelectedRow = firstSelectedCol = -1;
-        }
+        firstSelectedRow = firstSelectedCol = -1;
+        (void)started;
     }
 }
 
 void Game::refillMoves() {
     Level* currentLevel = levelManager.getCurrentLevel();
-    if (currentLevel) {
-        moves = currentLevel->getMaxMoves();
-    }
-    else {
-        moves = 20;
-    }
+    if (currentLevel) { moves = currentLevel->getMaxMoves(); }
+    else { moves = 20; }
 }
 
-void Game::clearScore() {
-    score = 0;
-}
-
-void Game::showGemTargetIfNeed(RenderWindow&  window, Objective* objective) {
-    if (objective->getType() == ObjectiveType::CollectGems) {
-        int gemKind = objective->getGemKind();
-
-        RectangleShape gemFrame(Vector2f(60, 60));
-        gemFrame.setPosition(465, 535);
-        gemFrame.setFillColor(Color(50, 50, 50, 180));
-        gemFrame.setOutlineColor(Color::Cyan);
-        gemFrame.setOutlineThickness(2);
-        window.draw(gemFrame);
-
-        Texture gemTexture;
-        if (gemTexture.loadFromFile("assets/spritesheet.png")) {
-            Sprite gemSprite;
-            gemSprite.setTexture(gemTexture);
-
-            gemSprite.setTextureRect(IntRect(gemKind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
-
-            gemSprite.setPosition(472, 538);
-
-            window.draw(gemSprite);
-        }
-
-        Text targetLabel;
-        targetLabel.setFont(font);
-        targetLabel.setString("Target:");
-        targetLabel.setCharacterSize(40);
-        targetLabel.setFillColor(Color::White);
-        targetLabel.setOutlineColor(Color::Black);
-        targetLabel.setOutlineThickness(2);
-        targetLabel.setPosition(350, 535);
-        window.draw(targetLabel);
-    }
-}
+void Game::clearScore() { score = 0; }
