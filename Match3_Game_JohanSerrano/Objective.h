@@ -19,6 +19,7 @@ private:
 
 public:
     Objective(ObjectiveType aType, int aTarget, int aGemKind);
+    Objective();
 
     void setDescription();
 

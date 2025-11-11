@@ -8,7 +8,7 @@ Gem::Gem()
     alpha = 255.0;
 }
 
-void Gem::setSprite(Texture& texture)
+void Gem::setSprite(const Texture& texture)
 {
     sprite.setTexture(texture);
     sprite.setTextureRect(IntRect(kind * GEM_WIDTH, 0, GEM_WIDTH, GEM_HEIGHT));
@@ -21,6 +21,7 @@ Sprite& Gem::getSprite()
 
 Gem::~Gem()
 {
+	kind = -1;
 }
 
 void Gem::setKind(int aKind)

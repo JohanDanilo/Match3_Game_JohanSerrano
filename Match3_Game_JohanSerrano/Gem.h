@@ -32,7 +32,7 @@ public:
     Gem();
     virtual ~Gem();
 
-    virtual void setSprite(Texture& texture);
+    virtual void setSprite(const Texture& texture);
     Sprite& getSprite();
 
     virtual void draw(RenderWindow& window) = 0;

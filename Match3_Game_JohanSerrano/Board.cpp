@@ -3,137 +3,91 @@
 
 Board::Board() {
     cout << "Inicializando tablero..." << endl;
-    loadTexture();
     initialize();
     state = Idle;
+    inputLocked = false;
 }
 
 Board::~Board() {
-
     for (int r = 0; r < ROWS; r++) {
-
         for (int c = 0; c < COLS; c++) {
-            delete grid[r][c];
-            grid[r][c] = nullptr;
-		}
-
+            if (grid[r][c]) {
+                delete grid[r][c];
+                grid[r][c] = nullptr;
+            }
+        }
     }
     clearObstacles();
 }
 
+/* ===================== INICIALIZACIÓN ===================== */
+
 void Board::initialize() {
-
     for (int r = 0; r < ROWS; r++) {
-
         for (int c = 0; c < COLS; c++) {
-            delete grid[r][c];
-            grid[r][c] = nullptr;
+            if (grid[r][c]) {
+                delete grid[r][c];
+                grid[r][c] = nullptr;
+            }
+            matches[r][c] = false;
         }
-
     }
 
     srand(static_cast<unsigned int>(time(0)));
 
-    for (int r = 0; r < ROWS; r++) {
+    try {
+        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
 
-        for (int c = 0; c < COLS; c++) {
+        for (int r = 0; r < ROWS; r++) {
+            for (int c = 0; c < COLS; c++) {
+                int kind = rand() % 5;
+                while (createsMatch(r, c, kind)) {
+                    kind = rand() % 5;
+                }
 
-            int kind = rand() % 5;
-
-            while (createsMatch(r, c, kind)) {
-                kind = rand() % 5;
+                grid[r][c] = new NormalGem(kind, r, c);
+                grid[r][c]->setSprite(texture);
+                grid[r][c]->setGridPositions(r, c);
+                grid[r][c]->setDestination(Vector2f(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y));
             }
-
-            grid[r][c] = new NormalGem(kind, r, c);
-            grid[r][c]->setSprite(texture);
-            grid[r][c]->setGridPositions(r, c);
-
-            Vector2f dest(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
-            grid[r][c]->setDestination(dest);
         }
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] Board::initialize() - No se pudo cargar spritesheet: " << e.what() << endl;
+        throw;
     }
 
     state = Idle;
     playerInitiatedMove = false;
-    firstGem = nullptr;
-    secondGem = nullptr;
+    inputLocked = false;
+    firstGem = secondGem = nullptr;
     firstRow = firstCol = secondRow = secondCol = -1;
 }
 
-bool Board::createsMatch(int row, int col, int kind) {
-    if (col >= 2 && grid[row][col - 1]->getKind() == kind && grid[row][col - 2]->getKind() == kind) {
-        return true;
-    }
-    if (row >= 2 && grid[row - 1][col]->getKind() == kind && grid[row - 2][col]->getKind() == kind) {
-        return true;
-    }
-    return false;
-}
-
-
-
-void Board::loadTexture() {
-    // Usa el ResourceManager (con las mismas rutas que usas en Game)
-    const Texture& tex = ResourceManager::instance().getTexture("assets/spritesheet.png");
-    texture = tex; // copia segura; mantiene tu interfaz actual (setSprite(texture))
-}
+/* ===================== DIBUJO ===================== */
 
 void Board::draw(RenderWindow& window) {
-
-    for (int row = 0; row < ROWS; row++){
-        for (int col = 0; col < COLS; col++){
-            if (grid[row][col]) { grid[row][col]->draw(window); }
+    for (int row = 0; row < ROWS; row++) {
+        for (int col = 0; col < COLS; col++) {
+            if (grid[row][col] && grid[row][col]->getKind() != -1) {
+                grid[row][col]->draw(window);
+            }
         }
-	}
+    }
 
     for (Obstacle* obs : obstacles) {
-        if (obs && !obs->isDestroyedState()) { obs->draw(window); }
+        if (obs && !obs->isDestroyedState()) {
+            obs->draw(window);
+        }
     }
 }
 
-bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
-    if (row1 == row2 && col1 == col2) { return false; }
-    return (abs(row1 - row2) + abs(col1 - col2) == 1);
-}
-
-bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
-
-	bool rowsOutOfBounds = (row1 < 0 || row1 >= ROWS || row2 < 0 || row2 >= ROWS);
-	bool colsOutOfBounds = (col1 < 0 || col1 >= COLS || col2 < 0 || col2 >= COLS);
-
-    if (rowsOutOfBounds || colsOutOfBounds) {
-        return false;
-    }
-
-    if (hasObstacleAt(row1, col1) || hasObstacleAt(row2, col2)) {
-        return false;
-    }
-
-    if (!areAdjacent(row1, col1, row2, col2)) { return false; }
-
-    firstRow = row1; firstCol = col1;
-    secondRow = row2; secondCol = col2;
-
-    firstGem = grid[firstRow][firstCol];
-    secondGem = grid[secondRow][secondCol];
-
-    swapOrigPos1 = firstGem->getSprite().getPosition();
-    swapOrigPos2 = secondGem->getSprite().getPosition();
-
-    Vector2f pos1(col1 * TILE_SIZE + offset.x, row1 * TILE_SIZE + offset.y);
-    Vector2f pos2(col2 * TILE_SIZE + offset.x, row2 * TILE_SIZE + offset.y);
-
-    firstGem->setDestination(pos2);
-    secondGem->setDestination(pos1);
-
-    state = Swapping;
-    playerInitiatedMove = true;
-    return true;
-}
+/* ===================== ESTADOS ===================== */
 
 void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     scoreGained = 0;
     moveConsumed = false;
+
     switch (state) {
     case Idle:
         handleIdleState();
@@ -160,12 +114,35 @@ void Board::handleIdleState() {
         triggerDisappearance();
         playerInitiatedMove = false;
         state = Scoring;
+        inputLocked = true;
     }
 }
 
 void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
     bool done1 = firstGem ? firstGem->moveGem(deltaTime) : true;
     bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
+
+    if (!firstGem || !secondGem) {
+        cerr << "[ERROR] Swap cancelado: puntero nulo.\n";
+        cout << "[DEBUG] Limpieza de selección (puntero nulo durante swap).\n";
+        firstGem = nullptr;
+        secondGem = nullptr;
+        firstRow = firstCol = secondRow = secondCol = -1;
+        state = Idle;
+        inputLocked = false;
+        return;
+    }
+
+    if (firstGem->getKind() == -1 || secondGem->getKind() == -1) {
+        cerr << "[ERROR] Swap cancelado: gema destruida.\n";
+        cout << "[DEBUG] Limpieza de selección (gema destruida durante swap).\n";
+        firstGem = nullptr;
+        secondGem = nullptr;
+        firstRow = firstCol = secondRow = secondCol = -1;
+        state = Idle;
+        inputLocked = false;
+        return;
+    }
 
     if (done1 && done2) {
         swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
@@ -178,6 +155,10 @@ void Board::handleSwappingState(float deltaTime, bool& moveConsumed) {
             activateSpecialGemsInMatches();
             triggerDisappearance();
             state = Scoring;
+            cout << "[DEBUG] Limpieza de selección (swap válido con match encontrado).\n";
+            firstGem = nullptr;
+            secondGem = nullptr;
+            firstRow = firstCol = secondRow = secondCol = -1;
         }
         else {
             revertSwap();
@@ -190,25 +171,27 @@ void Board::handleRevertingState(float deltaTime) {
     bool done2 = secondGem ? secondGem->moveGem(deltaTime) : true;
 
     if (done1 && done2) {
+        cout << "[DEBUG] Limpieza de selección (swap revertido).\n";
         firstGem = nullptr;
         secondGem = nullptr;
+        firstRow = firstCol = secondRow = secondCol = -1;
         state = Idle;
+        inputLocked = false;
+        cout << "[STATE] Board ahora en Idle (listo para input).\n";
     }
 }
 
 void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed) {
     bool anyStillAnimating = false;
-    
+
     for (int row = 0; row < ROWS; row++) {
         for (int col = 0; col < COLS; col++) {
             Gem* gem = grid[row][col];
             if (!gem) continue;
-
             if (gem->getDisappearingState() && gem->dissapear(deltaTime)) {
                 anyStillAnimating = true;
             }
         }
-
     }
 
     if (!anyStillAnimating) {
@@ -218,6 +201,7 @@ void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveCons
         applyGravity();
         refill();
         state = Moving;
+        // seguimos con inputLocked = true
     }
 }
 
@@ -226,57 +210,115 @@ void Board::handleMovingState(float deltaTime) {
 
     for (int row = 0; row < ROWS; row++) {
         for (int col = 0; col < COLS; col++) {
-            if (!grid[row][col]->moveGem(deltaTime)) { stillMoving = true; }
+            if (grid[row][col] && grid[row][col]->getKind() != -1) {
+                if (!grid[row][col]->moveGem(deltaTime)) {
+                    stillMoving = true;
+                }
+            }
         }
     }
 
     if (!stillMoving) {
         findMatches();
         if (checkAnyMatch()) {
-
             activateSpecialGemsInMatches();
-
             triggerDisappearance();
             playerInitiatedMove = false;
             state = Scoring;
         }
         else {
             state = Idle;
+            inputLocked = false;
+            cout << "[STATE] Board ahora en Idle (listo para input).\n";
         }
     }
 }
 
-bool Board::checkAnyMatch() {
-    for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLS; col++) {
-            if (matches[row][col]) { return true; }
-        }
-    }
-    return false;
+/* ===================== LÓGICA DE MATCHES ===================== */
+
+bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
+    if (row1 == row2 && col1 == col2) return false;
+    return (abs(row1 - row2) + abs(col1 - col2) == 1);
 }
 
-void Board::triggerDisappearance() {
-    for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLS; col++) {
-            if (matches[row][col]) {
-                grid[row][col]->startDisappearing();
-            }
-        }
-    }
-}
+bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
+    bool rowsOut = (row1 < 0 || row1 >= ROWS || row2 < 0 || row2 >= ROWS);
+    bool colsOut = (col1 < 0 || col1 >= COLS || col2 < 0 || col2 >= COLS);
 
-void Board::revertSwap() {
-    swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
-    grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
-    grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
+    if (rowsOut || colsOut) return false;
+    if (hasObstacleAt(row1, col1) || hasObstacleAt(row2, col2)) return false;
+    if (!areAdjacent(row1, col1, row2, col2)) return false;
+
+    firstRow = row1;
+    firstCol = col1;
+    secondRow = row2;
+    secondCol = col2;
 
     firstGem = grid[firstRow][firstCol];
     secondGem = grid[secondRow][secondCol];
-    firstGem->setDestination(swapOrigPos1);
-    secondGem->setDestination(swapOrigPos2);
+    if (!firstGem || !secondGem) return false;
+
+    swapOrigPos1 = firstGem->getSprite().getPosition();
+    swapOrigPos2 = secondGem->getSprite().getPosition();
+
+    Vector2f pos1(col1 * TILE_SIZE + offset.x, row1 * TILE_SIZE + offset.y);
+    Vector2f pos2(col2 * TILE_SIZE + offset.x, row2 * TILE_SIZE + offset.y);
+
+    firstGem->setDestination(pos2);
+    secondGem->setDestination(pos1);
+
+    state = Swapping;
+    playerInitiatedMove = true;
+    inputLocked = true; // 🔒 bloquea input durante animación
+    cout << "[LOCK] Input bloqueado (Swapping activo).\n";
+    return true;
+}
+
+void Board::revertSwap() {
+    if (!firstGem || !secondGem) {
+        cerr << "[WARN] revertSwap abortado: puntero inválido.\n";
+        cout << "[DEBUG] Limpieza de selección (revert abortado).\n";
+        firstGem = nullptr;
+        secondGem = nullptr;
+        firstRow = firstCol = secondRow = secondCol = -1;
+        state = Idle;
+        inputLocked = false;
+        return;
+    }
+
+    swap(grid[firstRow][firstCol], grid[secondRow][secondCol]);
+
+    if (grid[firstRow][firstCol])
+        grid[firstRow][firstCol]->setGridPositions(firstRow, firstCol);
+    if (grid[secondRow][secondCol])
+        grid[secondRow][secondCol]->setGridPositions(secondRow, secondCol);
+
+    firstGem = grid[firstRow][firstCol];
+    secondGem = grid[secondRow][secondCol];
+
+    if (firstGem) firstGem->setDestination(swapOrigPos1);
+    if (secondGem) secondGem->setDestination(swapOrigPos2);
+
+    cout << "[INFO] Revirtiendo swap inválido entre (" << firstRow << "," << firstCol
+        << ") y (" << secondRow << "," << secondCol << ").\n";
 
     playerInitiatedMove = false;
     state = Reverting;
+}
+
+
+bool Board::createsMatch(int row, int col, int kind) {
+    if (col >= 2 && grid[row][col - 1] && grid[row][col - 2] &&
+        grid[row][col - 1]->getKind() == kind && grid[row][col - 2]->getKind() == kind) {
+        return true;
+    }
+
+    if (row >= 2 && grid[row - 1][col] && grid[row - 2][col] &&
+        grid[row - 1][col]->getKind() == kind && grid[row - 2][col]->getKind() == kind) {
+        return true;
+    }
+
+    return false;
 }
 
 void Board::findMatches() {
@@ -304,7 +346,6 @@ void Board::checkLineMatches(bool horizontal) {
             int c0 = horizontal ? inner - 1 : outer;
 
             if (!grid[r1][c1] || !grid[r0][c0]) {
-                // NOTE: Code too nested
                 if (count >= 3) {
                     markMatches(horizontal, outer, inner - 1, count);
                 }
@@ -315,9 +356,7 @@ void Board::checkLineMatches(bool horizontal) {
             int cur = grid[r1][c1]->getKind();
             int prev = grid[r0][c0]->getKind();
 
-            bool same = (cur == prev);
-
-            if (same) {
+            if (cur == prev) {
                 count++;
             }
             else {
@@ -339,7 +378,7 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
     int destRow = -1;
     int destCol = -1;
 
-    // --- PASO 1: detectar si hay gemas especiales en la secuencia ---
+    // Detectar si hay gemas especiales
     bool containsSpecial = false;
     for (int k = 0; k < count; k++) {
         int r = horizontal ? outer : lastIndex - k;
@@ -351,13 +390,15 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
         }
     }
 
-    // --- PASO 2: calcular la posición donde nacería la especial ---
-    if (count >= 4 && !containsSpecial) { // solo si NO hay especiales
+    // Calcular posición de gema especial
+    if (count >= 4 && !containsSpecial) {
         auto inSequence = [&](int r, int c) -> bool {
-            if (horizontal)
+            if (horizontal) {
                 return (r == outer && c >= startIndex && c <= lastIndex);
-            else
+            }
+            else {
                 return (c == outer && r >= startIndex && r <= lastIndex);
+            }
             };
 
         if (playerInitiatedMove) {
@@ -382,24 +423,46 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
             }
         }
 
-        // Crear la gema especial solo si la celda es Normal
         if (grid[destRow][destCol] && grid[destRow][destCol]->getType() == "Normal") {
             spawnSpecialGem(destRow, destCol, horizontal);
         }
     }
 
-    // --- PASO 4: marcar las demás gemas del match para eliminar ---
+    // Marcar gemas para eliminar
     for (int k = 0; k < count; ++k) {
         int r = horizontal ? outer : lastIndex - k;
         int c = horizontal ? lastIndex - k : outer;
 
-        if (r < 0 || r >= ROWS || c < 0 || c >= COLS)
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
             continue;
+        }
 
-        if (r == destRow && c == destCol)
+        if (r == destRow && c == destCol) {
             continue;
+        }
 
         matches[r][c] = true;
+    }
+}
+
+bool Board::checkAnyMatch() {
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (matches[r][c]) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void Board::triggerDisappearance() {
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (matches[r][c] && grid[r][c]) {
+                grid[r][c]->startDisappearing();
+            }
+        }
     }
 }
 
@@ -407,15 +470,8 @@ int Board::clearMatches() {
     int score = 0;
     for (int r = 0; r < ROWS; r++) {
         for (int c = 0; c < COLS; c++) {
-            // NOTE: Code too nested
             if (matches[r][c] && grid[r][c]) {
-
-                cout << "[DELETE] Eliminando gema en (" << r << "," << c << ") PTR: "
-                    << grid[r][c] << " Kind: " << grid[r][c]->getKind()
-                    << " Tipo: " << grid[r][c]->getType() << endl;
-
                 updateObjectivesOnMatch(r, c);
-
                 damageAdjacentObstacles(r, c);
 
                 grid[r][c]->setKind(-1);
@@ -427,17 +483,24 @@ int Board::clearMatches() {
     return score;
 }
 
+/* ===================== OBJETIVOS Y OBSTÁCULOS ===================== */
+
 void Board::updateObjectivesOnMatch(int row, int col) {
-    if (!currentLevel) return;
+    if (!currentLevel) {
+        return;
+    }
 
     Objective* objective = currentLevel->getObjective();
-    if (!objective) return;
+    if (!objective) {
+        return;
+    }
 
     Gem* gem = grid[row][col];
-    if (!gem) return;
+    if (!gem) {
+        return;
+    }
 
     int gemKind = gem->getKind();
-
     if (objective->getType() == ObjectiveType::CollectGems) {
         if (objective->getGemKind() == gemKind) {
             objective->addProgress(1);
@@ -445,27 +508,37 @@ void Board::updateObjectivesOnMatch(int row, int col) {
     }
 }
 
+void Board::updateScoreObjective(int scoreGained) {
+    if (!currentLevel) {
+        return;
+    }
+
+    Objective* objective = currentLevel->getObjective();
+    if (objective && objective->getType() == ObjectiveType::ReachScore) {
+        objective->addProgress(scoreGained);
+    }
+}
+
 void Board::damageAdjacentObstacles(int row, int col) {
-    int dr[] = { -1, 1, 0, 0 };
-    int dc[] = { 0, 0, -1, 1 };
+    static const int dr[] = { -1, 1, 0, 0 };
+    static const int dc[] = { 0, 0, -1, 1 };
 
     for (int i = 0; i < 4; i++) {
         int nr = row + dr[i];
         int nc = col + dc[i];
 
-        if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
-            // NOTE: Code too nested
-            for (Obstacle* obs : obstacles) {
-                if (obs && !obs->isDestroyedState()) {
-                    if (obs->getRow() == nr && obs->getCol() == nc) {
-                        obs->takeDamage();
+        if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) {
+            continue;
+        }
 
-                        if (obs->isDestroyedState() && currentLevel) {
-                            Objective* objective = currentLevel->getObjective();
-                            if (objective && objective->getType() == ObjectiveType::ClearObstacles) {
-                                objective->addProgress(1);
-                            }
-                        }
+        for (Obstacle* obs : obstacles) {
+            if (obs && !obs->isDestroyedState() && obs->getRow() == nr && obs->getCol() == nc) {
+                obs->takeDamage();
+
+                if (obs->isDestroyedState() && currentLevel) {
+                    Objective* objective = currentLevel->getObjective();
+                    if (objective && objective->getType() == ObjectiveType::ClearObstacles) {
+                        objective->addProgress(1);
                     }
                 }
             }
@@ -473,197 +546,28 @@ void Board::damageAdjacentObstacles(int row, int col) {
     }
 }
 
-bool Board::hasObstacleAt(int row, int col) const {
-    for (Obstacle* obs : obstacles) {
-        if (obs && !obs->isDestroyedState()) {
-            // NOTE: Code too nested
-            if (obs->getRow() == row && obs->getCol() == col) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-void Board::applyGravity() {
-    cout << "\n[GRAVITY] Aplicando gravedad...\n";
-
-    for (int c = 0; c < COLS; ++c) {
-        for (int r = ROWS - 1; r >= 0; --r) {
-
-            Gem* current = grid[r][c];
-
-            // Si la celda ya está ocupada por una gema viva, saltar
-            if (current && current->getKind() != -1) {
+void Board::activateSpecialGemsInMatches() {
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            if (!(matches[r][c] && grid[r][c])) {
                 continue;
             }
 
-            // Buscar la primera gema viva arriba que pueda caer
-            int above = r - 1;
-            while (above >= 0) {
-
-                Gem* upper = grid[above][c];
-
-                if (!upper) {
-                    // No hay gema arriba, seguir buscando
-                    above--;
-                    continue;
-                }
-
-                if (upper->getKind() == -1) {
-                    // Gema muerta: continuar buscando más arriba
-                    above--;
-                    continue;
-                }
-
-                // Gema válida encontrada → hacerla caer
-                swap(grid[r][c], grid[above][c]);
-
-                Gem* fallingGem = grid[r][c];
-                fallingGem->resetTransientState();
-                fallingGem->setGridPositions(r, c);
-
-                Vector2f dest(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
-                fallingGem->setDestination(dest);
-
-                cout << "[MOVE] Gema bajando de (" << above << "," << c << ") a (" << r << "," << c << ") "
-                    << "PTR: " << fallingGem
-                    << " Kind: " << fallingGem->getKind()
-                    << " Tipo: " << fallingGem->getType() << endl;
-
-                // Marcar la celda original como vacía
-                grid[above][c]->setKind(-1);
-                grid[above][c]->getSprite().setPosition(
-                    c * TILE_SIZE + offset.x, above * TILE_SIZE + offset.y);
-                grid[above][c]->getSprite().setColor(Color(255, 255, 255, 0));
-                break;
+            if (grid[r][c]->getType() == "Bomb") {
+                activateBombEffect(r, c);
             }
-
-            // Si no se encontró ninguna gema viva arriba
-            if (above < 0) {
-                // Dejar la celda lista para refill
-                if (grid[r][c]) {
-                    grid[r][c]->setKind(-1);
-                    grid[r][c]->getSprite().setColor(Color(255, 255, 255, 0));
-                }
-                else {
-                    grid[r][c] = nullptr;
-                }
-
-                cout << "[EMPTY] Celda vacía en (" << r << "," << c << "), lista para refill\n";
+            else if (grid[r][c]->getType() == "Ice") {
+                activateIceEffect(r);
             }
         }
     }
-
-    cout << "[GRAVITY] Finalizado.\n";
-}
-
-
-void Board::refill() {
-    for (int c = 0; c < COLS; c++) {
-        for (int r = ROWS - 1; r >= 0; r--) {
-            // NOTE: Code too nested
-            if (grid[r][c]->getKind() != -1) {
-                continue;
-            }
-
-            if (hasObstacleAt(r, c)) {
-                continue;
-            }
-
-            spawnGem(r, c);
-        }
-    }
-}
-
-
-void Board::spawnGem(int r, int c) {
-    // Si ya existe una gema "muerta" (-1), eliminar antes de crear una nueva
-    if (grid[r][c]) {
-        delete grid[r][c];
-        grid[r][c] = nullptr;
-    }
-
-    // Crear una gema normal aleatoria
-    int kind = rand() % 5;
-    grid[r][c] = new NormalGem(kind, r, c);
-
-    // Asignar textura y restablecer estado transitorio
-    grid[r][c]->setSprite(texture);
-    grid[r][c]->resetTransientState();
-    grid[r][c]->setGridPositions(r, c);
-
-    // Posición inicial: aparece desde arriba del tablero
-    Vector2f spawn(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y);
-    grid[r][c]->getSprite().setPosition(spawn);
-
-    // Posición final (destino)
-    Vector2f destination(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y);
-    grid[r][c]->setDestination(destination);
-
-    // DEBUG
-    cout << "[SPAWN] Nueva gema creada en (" << r << "," << c << ") "
-        << "PTR: " << grid[r][c]
-        << " Kind: " << grid[r][c]->getKind()
-        << " Tipo: " << grid[r][c]->getType() << endl;
-}
-
-
-void Board::spawnSpecialGem(int row, int col, bool horizontal) {
-    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
-
-    Gem* target = grid[row][col];
-    if (!target) return;
-
-    bool isSpecial = (target->getType() == "Bomb" || target->getType() == "Ice");
-    if (isSpecial) {
-        cout << "[INFO] Gema especial ya existente en (" << row << "," << col << "), no se reemplaza.\n";
-        return;
-    }
-
-    int kind = target->getKind();
-
-    delete grid[row][col];
-    grid[row][col] = nullptr;
-
-    // Crear la nueva gema especial
-    if (horizontal) {
-        grid[row][col] = new BombGem(kind, row, col);
-    }
-    else {
-        grid[row][col] = new IceGem(kind, row, col);
-    }
-
-    // Configurar sprite y posición
-    grid[row][col]->setSprite(texture);
-    grid[row][col]->resetTransientState();
-    grid[row][col]->setGridPositions(row, col);
-
-    Vector2f dest(col * TILE_SIZE + offset.x, row * TILE_SIZE + offset.y);
-    grid[row][col]->getSprite().setPosition(dest);
-    grid[row][col]->setDestination(dest);
-
-    cout << "[SPAWN SPECIAL] Nueva gema especial en (" << row << "," << col << ") "
-        << "Tipo: " << grid[row][col]->getType()
-        << " Kind: " << grid[row][col]->getKind()
-        << " PTR: " << grid[row][col] << endl;
-}
-
-
-int Board::getState() const {
-    return static_cast<int>(state);
-}
-
-Gem* Board::getGem(int row, int col) {
-    return grid[row][col];
 }
 
 void Board::activateBombEffect(int row, int col) {
     const int RADIUS = 1;
     for (int r = row - RADIUS; r <= row + RADIUS; ++r) {
         for (int c = col - RADIUS; c <= col + RADIUS; ++c) {
-            // NOTE: Code too nested
-            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+            if (r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c]) {
                 grid[r][c]->startDisappearing();
                 matches[r][c] = true;
             }
@@ -673,14 +577,134 @@ void Board::activateBombEffect(int row, int col) {
 
 void Board::activateIceEffect(int row) {
     for (int c = 0; c < COLS; ++c) {
-        grid[row][c]->startDisappearing();
-        matches[row][c] = true;
+        if (grid[row][c]) {
+            grid[row][c]->startDisappearing();
+            matches[row][c] = true;
+        }
     }
 }
 
-void Board::setCurrentLevel(Level* level) {
-    currentLevel = level;
+/* ===================== FÍSICA Y REFILL ===================== */
+
+void Board::applyGravity() {
+    for (int c = 0; c < COLS; ++c) {
+        for (int r = ROWS - 1; r >= 0; --r) {
+            Gem* current = grid[r][c];
+
+            if (current && current->getKind() != -1) {
+                continue;
+            }
+
+            int above = r - 1;
+            while (above >= 0 && (!grid[above][c] || grid[above][c]->getKind() == -1)) {
+                above--;
+            }
+
+            if (above >= 0 && grid[above][c]) {
+                swap(grid[r][c], grid[above][c]);
+                Gem* g = grid[r][c];
+                g->resetTransientState();
+                g->setGridPositions(r, c);
+                g->setDestination(Vector2f(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y));
+
+                if (grid[above][c]) {
+                    grid[above][c]->setKind(-1);
+                    grid[above][c]->getSprite().setColor(Color(255, 255, 255, 0));
+                }
+            }
+            else {
+                if (grid[r][c] && grid[r][c]->getKind() == -1) {
+                    delete grid[r][c];
+                    grid[r][c] = nullptr;
+                }
+            }
+        }
+    }
 }
+
+void Board::refill() {
+    try {
+        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+
+        for (int c = 0; c < COLS; c++) {
+            for (int r = ROWS - 1; r >= 0; r--) {
+                if (grid[r][c] != nullptr) {
+                    continue;
+                }
+
+                if (hasObstacleAt(r, c)) {
+                    continue;
+                }
+
+                spawnGem(r, c);
+            }
+        }
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] Board::refill() - " << e.what() << endl;
+    }
+}
+
+void Board::spawnGem(int r, int c) {
+    try {
+        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+
+        if (grid[r][c]) {
+            delete grid[r][c];
+            grid[r][c] = nullptr;
+        }
+
+        int kind = rand() % 5;
+        grid[r][c] = new NormalGem(kind, r, c);
+        grid[r][c]->setSprite(texture);
+        grid[r][c]->resetTransientState();
+        grid[r][c]->setGridPositions(r, c);
+        grid[r][c]->getSprite().setPosition(Vector2f(c * TILE_SIZE + offset.x, -TILE_SIZE + offset.y));
+        grid[r][c]->setDestination(Vector2f(c * TILE_SIZE + offset.x, r * TILE_SIZE + offset.y));
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] Board::spawnGem() - " << e.what() << endl;
+    }
+}
+
+void Board::spawnSpecialGem(int row, int col, bool horizontal) {
+    try {
+        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+
+        if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+            return;
+        }
+
+        Gem* target = grid[row][col];
+        if (!target || target->getType() != "Normal") {
+            return;
+        }
+
+        int kind = target->getKind();
+        delete grid[row][col];
+        grid[row][col] = nullptr;
+
+        if (horizontal) {
+            grid[row][col] = new BombGem(kind, row, col);
+        }
+        else {
+            grid[row][col] = new IceGem(kind, row, col);
+        }
+
+        grid[row][col]->setSprite(texture);
+        grid[row][col]->resetTransientState();
+        grid[row][col]->setGridPositions(row, col);
+
+        Vector2f dest(col * TILE_SIZE + offset.x, row * TILE_SIZE + offset.y);
+        grid[row][col]->getSprite().setPosition(dest);
+        grid[row][col]->setDestination(dest);
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] Board::spawnSpecialGem() - " << e.what() << endl;
+    }
+}
+
+/* ===================== OBSTÁCULOS ===================== */
 
 void Board::placeObstacles(int count) {
     clearObstacles();
@@ -693,9 +717,8 @@ void Board::placeObstacles(int count) {
             int r = rand() % ROWS;
             int c = rand() % COLS;
 
-            // NOTE: Code too nested
             if (!hasObstacleAt(r, c)) {
-                IronBlock* iron = new IronBlock(r, c);
+                Obstacle* iron = new IronBlock(r, c);
                 obstacles.push_back(iron);
                 placed = true;
             }
@@ -711,18 +734,23 @@ void Board::clearObstacles() {
     obstacles.clear();
 }
 
-void Board::updateScoreObjective(int scoreGained) {
-    if (!currentLevel) return;
-
-    Objective* objective = currentLevel->getObjective();
-    if (objective && objective->getType() == ObjectiveType::ReachScore) {
-        objective->addProgress(scoreGained);
+bool Board::hasObstacleAt(int row, int col) const {
+    for (Obstacle* obs : obstacles) {
+        if (obs && !obs->isDestroyedState() && obs->getRow() == row && obs->getCol() == col) {
+            return true;
+        }
     }
+    return false;
+}
+
+/* ===================== NIVEL ===================== */
+
+void Board::setCurrentLevel(Level* level) {
+    currentLevel = level;
 }
 
 void Board::clearCurrentLevel() {
     currentLevel = nullptr;
-
     for (Obstacle* obs : obstacles) {
         if (obs) {
             delete obs;
@@ -731,20 +759,67 @@ void Board::clearCurrentLevel() {
     obstacles.clear();
 }
 
-void Board::activateSpecialGemsInMatches() {
-    for (int r = 0; r < ROWS; r++) {
-        for (int c = 0; c < COLS; c++) {
+/* ===================== UTILIDADES ===================== */
 
-            bool isValid = (matches[r][c] && grid[r][c]);
-
-            if (isValid && grid[r][c]->getType() == "Bomb") {
-                activateBombEffect(r, c);
-            }
-            else if (isValid && grid[r][c]->getType() == "Ice") {
-                    activateIceEffect(r); 
-            }
-
-        }
-    }
+int Board::getState() const {
+    return static_cast<int>(state);
 }
 
+Gem* Board::getGem(int row, int col) {
+    return grid[row][col];
+}
+
+/* ===================== INPUT ===================== */
+
+void Board::handleGemClick(int row, int col) {
+    if (inputLocked || state != Idle) {
+        cout << "[WARN] Click ignorado: tablero ocupado o animando.\n";
+        return;
+    }
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+        cout << "[WARN] Click fuera del rango del tablero.\n";
+        return;
+    }
+    if (!grid[row][col]) {
+        cout << "[WARN] Click en celda vacía (" << row << "," << col << ").\n";
+        return;
+    }
+    if (grid[row][col]->getKind() == -1) {
+        cout << "[WARN] Click en gema inactiva (" << row << "," << col << ").\n";
+        return;
+    }
+
+    if (!firstGem) {
+        firstRow = row;
+        firstCol = col;
+        firstGem = grid[row][col];
+        cout << "[INPUT] Primera gema seleccionada en (" << row << ", " << col
+            << ") tipo=" << firstGem->getKind() << "\n";
+        return;
+    }
+
+    if (firstRow == row && firstCol == col) {
+        cout << "[INFO] Misma gema clickeada dos veces, deseleccionando.\n";
+        cout << "[DEBUG] Limpieza de selección (click repetido).\n";
+        firstGem = nullptr;
+        firstRow = firstCol = -1;
+        return;
+    }
+
+    cout << "[INPUT] Segunda gema seleccionada en (" << row << ", " << col
+        << ") tipo=" << grid[row][col]->getKind() << "\n";
+
+    bool accepted = trySwapIndices(firstRow, firstCol, row, col);
+
+    if (accepted) {
+        cout << "[SWAP] Intercambio aceptado entre (" << firstRow << "," << firstCol
+            << ") y (" << row << "," << col << ")\n";
+    }
+    else {
+        cout << "[ERROR] Swap cancelado entre (" << firstRow << "," << firstCol
+            << ") y (" << row << "," << col << ")\n";
+        cout << "[DEBUG] Limpieza de selección (swap no válido).\n";
+        firstGem = nullptr;
+        firstRow = firstCol = -1;
+    }
+}

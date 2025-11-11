@@ -24,6 +24,7 @@
     <ProjectGuid>{7c24eb7e-fc8b-40ec-9165-6f0d8fa2087f}</ProjectGuid>
     <RootNamespace>Match3GameJohanSerrano</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>main</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -144,6 +145,7 @@
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
+    <ClCompile Include="UXManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
@@ -158,6 +160,7 @@
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="UXManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,56 +1,54 @@
 #pragma once
-
-#include "Board.h"
-#include "LevelManager.h"
-#include "ResourceManager.h"
-#include "UIManager.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include "Board.h"
+#include "UIManager.h"
+#include "UXManager.h"
+#include "Objective.h"
 
 using namespace sf;
 using namespace std;
 
-enum class GameState { MainMenu, Playing, GameOver, LevelComplete };
+enum class GameState {
+    MainMenu,
+    LevelMap,
+    Playing,
+    LevelComplete,
+    GameOver,
+    Exit
+};
 
 class Game {
 private:
     Board board;
-    LevelManager levelManager;
-
     UIManager* uiManager = nullptr;
+    UXManager* ux = nullptr;
 
+    Font font;
+    Texture uiTexture;
 
-    int score;
-    int moves;
-    GameState state;
-    bool running;
+    bool running = true;
+    GameState state = GameState::MainMenu;
+    int score = 0;
+    int moves = 20;
+    int currentLevel = 1;
 
-    const Texture* mainMenuTexture;
-    const Texture* backgroundTexture;
-    const Texture* gameOverTexture;
-    const Font* font;
-
-	Sprite mainMenuSprite, backgroundSprite, gameOverSprite;
-
-    int firstSelectedRow = -1, firstSelectedCol = -1;
-
-    Vector2f getClickPosition(RenderWindow& window);
-    bool isClickInsideBoard(RenderWindow& window);
-
-    void runMainMenu();
-    void runGameLoop();
-    void runGameOver();
-    void runLevelComplete();
-    void selectGem(RenderWindow& window);
-    void refillMoves();
-    void clearScore();
-    void startLevel();
-    void drawObjectivesPanel(RenderWindow& window);
-    bool checkLevelCompletion();
+    Objective objective;
 
 public:
     Game();
-    void init();
-    void loadResources();
+    ~Game();
+
     void run();
+
+private:
+    void init();
+    void runMainMenu();
+    void runLevelMap();
+    void runGameLoop();
+    void runLevelComplete();
+    void runGameOver();
+
+    void startLevel();
+    void drawCurrentScene();
 };

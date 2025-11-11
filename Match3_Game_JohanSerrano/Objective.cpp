@@ -9,6 +9,14 @@ Objective::Objective(ObjectiveType aType, int aTarget, int aGemKind){
     
 }
 
+Objective::Objective()
+{
+    type = ObjectiveType::CollectGems;
+    targetAmount = 30;
+    gemKind = 3;
+	setDescription();
+}
+
 void Objective :: setDescription() {
 
     switch (type) {
