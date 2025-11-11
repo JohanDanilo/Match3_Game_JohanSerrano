@@ -1,25 +1,30 @@
 #pragma once
-#include "Level.h"
 #include <vector>
+#include <string>
+#include "Level.h"
+#include "Objective.h"
+
 using namespace std;
 
 class LevelManager {
 private:
     vector<Level*> levels;
-    int currentLevelIndex = 0;
+    int currentLevelIndex;
 
-    void createLevel1();
-    void createLevel2();
-    void createLevel3();
+    void createLevelGeneric(int number, ObjectiveType type, int target, int gemKind, int moves, int obstacles);
 
 public:
     LevelManager();
     ~LevelManager();
-    void reset();
-    void initializeLevels();
+
+    // Carga los niveles desde un archivo de texto
+    void loadLevelsFromFile(const string& filename);
+
+    // Control general
     Level* getCurrentLevel();
     bool hasNextLevel() const;
     void nextLevel();
+    void reset();
     void resetCurrentLevel();
     int getCurrentLevelNumber() const;
 };

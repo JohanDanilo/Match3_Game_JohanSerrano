@@ -14,7 +14,7 @@ Game::~Game() {
 void Game::init() {
     cout << "[INIT] Cargando recursos iniciales..." << endl;
 
-    levelManager.initializeLevels();
+    //levelManager.initializeLevels();
     activeLevel = levelManager.getCurrentLevel();
     board.setCurrentLevel(activeLevel);
 

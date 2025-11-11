@@ -1,7 +1,14 @@
 #include "LevelManager.h"
+#include <fstream>
+#include <sstream>
+#include <iostream>
+using namespace std;
+
+/* ===================== CONSTRUCTOR / DESTRUCTOR ===================== */
 
 LevelManager::LevelManager() : currentLevelIndex(0) {
-    initializeLevels();
+    // Carga automática desde archivo de texto
+    loadLevelsFromFile("assets/data/levels.txt");
 }
 
 LevelManager::~LevelManager() {
@@ -11,63 +18,85 @@ LevelManager::~LevelManager() {
     levels.clear();
 }
 
-void LevelManager::initializeLevels() {
-    createLevel1();
-    createLevel2();
-    createLevel3();
-}
+/* ===================== CARGA DE NIVELES DESDE ARCHIVO ===================== */
 
-void LevelManager::reset() {
-    currentLevelIndex = 0;
-
-    for (Level* level : levels) {
-        if (level) {
-            level->resetLevel();
-        }
+void LevelManager::loadLevelsFromFile(const string& filename) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "[ERROR] No se pudo abrir el archivo de niveles: " << filename << endl;
+        return;
     }
+
+    levels.clear();
+    string line;
+    int lineNumber = 0;
+
+    while (getline(file, line)) {
+        lineNumber++;
+        if (line.empty() || line[0] == '#') continue; // Ignora comentarios o líneas vacías
+
+        stringstream ss(line);
+        int number, typeInt, target, gemKind, moves, obstacles;
+
+        ss >> number >> typeInt >> target >> gemKind >> moves >> obstacles;
+        if (ss.fail()) {
+            cerr << "[WARN] Línea inválida en " << lineNumber << ": " << line << endl;
+            continue;
+        }
+
+        ObjectiveType type = static_cast<ObjectiveType>(typeInt);
+        createLevelGeneric(number, type, target, gemKind, moves, obstacles);
+    }
+
+    file.close();
+
+    cout << "[INFO] Se cargaron " << levels.size() << " niveles desde archivo '" << filename << "'.\n";
 }
 
-void LevelManager::createLevel1() {
-    Objective* obj1 = new Objective(ObjectiveType::CollectGems, 15, 0);
-    Level* level1 = new Level(1, 20, obj1);
-    level1->setObstacleCount(0);
-    levels.push_back(level1);
+/* ===================== CREACIÓN DE NIVEL ===================== */
+
+void LevelManager::createLevelGeneric(int number, ObjectiveType type, int target, int gemKind, int moves, int obstacles) {
+    Objective* obj = new Objective(type, target, gemKind);
+    Level* lvl = new Level(number, moves, obj);
+    lvl->setObstacleCount(obstacles);
+    levels.push_back(lvl);
 }
 
-void LevelManager::createLevel2() {
-    Objective* obj2 = new Objective(ObjectiveType::ReachScore, 600, 2);
-    Level* level2 = new Level(2, 20, obj2);
-    level2->setObstacleCount(5);
-    levels.push_back(level2);
-}
-
-void LevelManager::createLevel3() {
-    Objective* obj3 = new Objective(ObjectiveType::ClearObstacles, 10, 5);
-    Level* level3 = new Level(3, 20, obj3);
-    level3->setObstacleCount(10);
-    levels.push_back(level3);
-}
+/* ===================== CONTROL DE NIVELES ===================== */
 
 Level* LevelManager::getCurrentLevel() {
     if (currentLevelIndex < levels.size()) {
         return levels[currentLevelIndex];
     }
+    cerr << "[WARN] Solicitud de nivel inválido. Índice actual: " << currentLevelIndex << endl;
     return nullptr;
 }
 
 bool LevelManager::hasNextLevel() const {
-    return currentLevelIndex < levels.size() - 1;
+    return currentLevelIndex < static_cast<int>(levels.size()) - 1;
 }
 
 void LevelManager::nextLevel() {
     if (hasNextLevel()) {
         currentLevelIndex++;
     }
+    else {
+        cout << "[INFO] No hay más niveles disponibles.\n";
+    }
 }
 
 void LevelManager::resetCurrentLevel() {
     if (currentLevelIndex < levels.size()) {
         levels[currentLevelIndex]->resetLevel();
+    }
+}
+
+void LevelManager::reset() {
+    currentLevelIndex = 0;
+    for (Level* level : levels) {
+        if (level) {
+            level->resetLevel();
+        }
     }
 }
 
