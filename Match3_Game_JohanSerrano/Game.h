@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "Board.h"
+#include "LevelManager.h"
 #include "UIManager.h"
 #include "UXManager.h"
 #include "Objective.h"
@@ -19,11 +20,11 @@ enum class GameState {
 };
 
 class Game {
+
 private:
     Board board;
     UIManager* uiManager = nullptr;
     UXManager* ux = nullptr;
-
     Font font;
     Texture uiTexture;
 
@@ -31,9 +32,11 @@ private:
     GameState state = GameState::MainMenu;
     int score = 0;
     int moves = 20;
-    int currentLevel = 1;
 
-    Objective objective;
+    LevelManager levelManager;     
+    Level* activeLevel = nullptr;
+
+    
 
 public:
     Game();

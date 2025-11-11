@@ -57,6 +57,11 @@ void Board::initialize() {
         throw;
     }
 
+    if (currentLevel && currentLevel->getObstacleCount() > 0) {
+        placeObstacles(currentLevel->getObstacleCount());
+        cout << "[DEBUG] Obstáculos generados: " << currentLevel->getObstacleCount() << endl;
+    }
+
     state = Idle;
     playerInitiatedMove = false;
     inputLocked = false;
@@ -709,23 +714,33 @@ void Board::spawnSpecialGem(int row, int col, bool horizontal) {
 void Board::placeObstacles(int count) {
     clearObstacles();
 
-    for (int i = 0; i < count; i++) {
-        bool placed = false;
-        int attempts = 0;
+    int placed = 0;
+    int maxAttempts = ROWS * COLS * 10;
 
-        while (!placed && attempts < 50) {
-            int r = rand() % ROWS;
-            int c = rand() % COLS;
+    while (placed < count && maxAttempts-- > 0) {
+        int r = rand() % ROWS;
+        int c = rand() % COLS;
 
-            if (!hasObstacleAt(r, c)) {
-                Obstacle* iron = new IronBlock(r, c);
-                obstacles.push_back(iron);
-                placed = true;
-            }
-            attempts++;
-        }
+        if (hasObstacleAt(r, c))
+            continue;
+
+        if (!grid[r][c] || grid[r][c]->getKind() == -1)
+            continue;
+
+        obstacles.push_back(new IronBlock(r, c));
+        placed++;
+    }
+
+    if (placed < count) {
+        cout << "[WARN] Solo se pudieron colocar " << placed
+            << " de " << count << " obstáculos.\n";
+    }
+    else {
+        cout << "[DEBUG] Se colocaron " << placed << " obstáculos de hierro.\n";
     }
 }
+
+
 
 void Board::clearObstacles() {
     for (Obstacle* obs : obstacles) {

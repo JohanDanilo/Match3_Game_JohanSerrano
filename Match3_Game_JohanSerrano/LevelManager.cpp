@@ -28,14 +28,14 @@ void LevelManager::reset() {
 }
 
 void LevelManager::createLevel1() {
-    Objective* obj1 = new Objective(ObjectiveType::CollectGems, 30, 0);
+    Objective* obj1 = new Objective(ObjectiveType::CollectGems, 15, 0);
     Level* level1 = new Level(1, 20, obj1);
     level1->setObstacleCount(0);
     levels.push_back(level1);
 }
 
 void LevelManager::createLevel2() {
-    Objective* obj2 = new Objective(ObjectiveType::ReachScore, 1000, 2);
+    Objective* obj2 = new Objective(ObjectiveType::ReachScore, 600, 2);
     Level* level2 = new Level(2, 20, obj2);
     level2->setObstacleCount(5);
     levels.push_back(level2);
