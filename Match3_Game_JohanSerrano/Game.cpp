@@ -23,16 +23,7 @@ void Game::init() {
         ux = new UXManager(&font, uiManager);
         ux->setScene(SceneType::MainMenu);
 
-        // Intentar cargar progreso guardado
-        if (PersistenceManager::loadProgress(playerName, currentLevelIndex, totalScore)) {
-            cout << "[LOAD] Progreso cargado correctamente:\n";
-            cout << "Jugador: " << playerName << " | Nivel: " << currentLevelIndex << " | Total Score: " << totalScore << endl;
-            levelManager.setCurrentLevelIndex(currentLevelIndex);
-        }
-        else {
-            cout << "[LOAD] No se encontró progreso previo. Iniciando nuevo jugador." << endl;
-            currentLevelIndex = 0;
-        }
+        // No se carga progreso aquí, se hace correctamente en runMainMenu()
 
         activeLevel = levelManager.getCurrentLevel();
         board.setCurrentLevel(activeLevel);
@@ -43,6 +34,8 @@ void Game::init() {
         cerr << "[ERROR] Game::init() - No se pudieron cargar los recursos: " << e.what() << endl;
         running = false;
     }
+
+    initLevelMapUI();
 }
 
 /* ===================== MAIN LOOP ===================== */
@@ -60,13 +53,11 @@ void Game::run() {
 }
 
 /* ===================== MAIN MENU ===================== */
-
-
 void Game::runMainMenu() {
     ux->setScene(SceneType::MainMenu);
     auto& window = ux->getWindow();
 
-    bool enteringName = playerName.empty(); // Solo se pide si no hay jugador
+    bool enteringName = playerName.empty();
     std::string tempName = "";
 
     Text namePrompt("Enter your name:", font, 40);
@@ -92,7 +83,7 @@ void Game::runMainMenu() {
             // Ingreso de nombre
             if (enteringName && event.type == Event::TextEntered) {
                 if (event.text.unicode == '\b' && !tempName.empty()) {
-                    tempName.pop_back(); // retroceso
+                    tempName.pop_back();
                 }
                 else if (event.text.unicode == '\r') { // ENTER
                     if (!tempName.empty()) {
@@ -101,17 +92,18 @@ void Game::runMainMenu() {
 
                         int savedLevel = 1, savedScore = 0;
 
-                        // Si ya existe archivo cargar progreso
+                        // Si ya existe archivo, cargar progreso; si no, crearlo nuevo
                         if (!PersistenceManager::loadProgress(playerName, savedLevel, savedScore)) {
                             PersistenceManager::saveProgress(playerName, 1, 0);
                         }
 
                         // Sincronizar progreso con LevelManager
-                        levelManager.setCurrentLevelIndex(savedLevel - 1);
+                        levelManager.setCurrentLevelIndex(savedLevel-1);
+                        totalScore = savedScore;
+
+                        syncLevelIconsByProgress();
 
                         enteringName = false;
-
-                        // Avanzar directo al mapa de niveles
                         state = GameState::LevelMap;
                         return;
                     }
@@ -156,14 +148,18 @@ void Game::runMainMenu() {
     }
 }
 
-
-
 /* ===================== LEVEL MAP ===================== */
 void Game::runLevelMap() {
     ux->setScene(SceneType::LevelMap);
     auto& window = ux->getWindow();
 
-    cout << "[DEBUG] Entrando al LevelsMapFinal..." << endl;
+    if (!levelMapUIInitialized) {
+        initLevelMapUI();
+    }
+
+    syncLevelIconsByProgress();
+
+    cout << "[DEBUG] Entrando a LevelsMapFinal..." << endl;
 
     while (ux->isOpen() && state == GameState::LevelMap) {
         Event event;
@@ -171,21 +167,62 @@ void Game::runLevelMap() {
             if (event.type == Event::Closed) {
                 ux->close();
                 running = false;
+                return;
             }
 
             if (event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
-                cout << "[DEBUG] Click en LevelMap: (" << mousePos.x << ", " << mousePos.y << ")\n";
 
+                // --- Botón PLAY (zona exacta del fondo) ---
                 if (IntRect(336, 543, 112, 44).contains(mousePos)) {
                     startLevel();
                     state = GameState::Playing;
+                    return;
+                }
+
+                // --- Botón HIGH SCORES ---
+                if (highScoresButton.getGlobalBounds().contains((Vector2f)mousePos)) {
+                    cout << "[UI] High Scores presionado." << endl;
+                }
+
+                // --- Botón EXIT ---
+                if (exitButton.getGlobalBounds().contains((Vector2f)mousePos)) {
+                    ux->close();
+                    running = false;
+                    return;
                 }
             }
         }
 
+        // --- Renderizado ---
         ux->clear();
         ux->drawBackground("assets/LevelsMapFinal.png");
+
+        // Dibuja candados y checks
+        for (size_t i = 0; i < levelIcons.size(); ++i) {
+            if (levelIcons[i].completed) {
+                levelIcons[i].checkSprite.setPosition(levelIcons[i].position);
+                window.draw(levelIcons[i].checkSprite);
+            }
+            else if (!levelIcons[i].unlocked) {
+                levelIcons[i].lockSprite.setPosition(levelIcons[i].position);
+                window.draw(levelIcons[i].lockSprite);
+            }
+        }
+
+        // Cursor del nivel actual (a la izquierda del nivel desbloqueado)
+        int current = levelManager.getCurrentLevelNumber() - 1;
+        if (current < 0) current = 0;
+        if (current >= (int)levelIcons.size()) current = (int)levelIcons.size() - 1;
+
+        Vector2f pos = levelIcons[current].position;
+        cursor.setPosition(pos.x - 75.f, pos.y - 20.f);
+        window.draw(cursor);
+
+        // Botones fijos
+        window.draw(highScoresButton);
+        window.draw(exitButton);
+
         ux->display();
     }
 }
@@ -249,14 +286,6 @@ void Game::runGameLoop() {
         // Cuando se completa el nivel
         if (activeLevel && activeLevel->getObjective()->isCompleted()) {
             totalScore += score;
-
-            // Guarda progreso y puntuación acumulada
-            PersistenceManager::saveProgress(
-                playerName,
-                levelManager.getCurrentLevelNumber(),
-                totalScore
-            );
-
             state = GameState::LevelComplete;
             break;
         }
@@ -267,7 +296,6 @@ void Game::runGameLoop() {
         }
     }
 }
-
 
 /* ===================== LEVEL COMPLETE ===================== */
 void Game::runLevelComplete() {
@@ -284,12 +312,27 @@ void Game::runLevelComplete() {
             }
 
             if (event.type == Event::MouseButtonPressed) {
+                // Avanzar al siguiente nivel o reiniciar al primero si terminó todos
                 if (levelManager.hasNextLevel()) {
                     levelManager.nextLevel();
                 }
                 else {
-                    levelManager.reset();
+                    levelManager.reset(); // reinicia a nivel 1 si ya completó todos
                 }
+
+                // Obtener el siguiente nivel a jugar (ya actualizado tras nextLevel)
+                int nextToPlay = levelManager.getCurrentLevelNumber();
+
+                // Guardar progreso actualizado (próximo nivel a jugar)
+                PersistenceManager::saveProgress(
+                    playerName,
+                    nextToPlay,
+                    totalScore
+                );
+
+                // Actualizar iconos visuales (candados, checks y cursor)
+                syncLevelIconsByProgress();
+
                 activeLevel = levelManager.getCurrentLevel();
                 state = GameState::LevelMap;
                 return;
@@ -318,6 +361,7 @@ void Game::runLevelComplete() {
         ux->display();
     }
 }
+
 
 /* ===================== GAME OVER ===================== */
 void Game::runGameOver() {
@@ -381,5 +425,79 @@ void Game::drawCurrentScene() {
         ux->drawBackground("assets/background.png");
         ux->drawBoard(board);
         ux->drawGameUI(*uiManager);
+    }
+}
+
+/* ===================== LEVEL MAP UI INIT ===================== */
+void Game::initLevelMapUI() {
+    try {
+        const Texture& padlockTex = ResourceManager::instance().getTexture("assets/padlock.png");
+        const Texture& checkTex = ResourceManager::instance().getTexture("assets/completedLevel.png");
+        const Texture& cursorTex = ResourceManager::instance().getTexture("assets/cursor.png");
+        const Texture& hsTex = ResourceManager::instance().getTexture("assets/highScores.png");
+        const Texture& exitTex = ResourceManager::instance().getTexture("assets/exit.png");
+
+        highScoresButton.setTexture(hsTex);
+        highScoresButton.setPosition(680.f, 542.f);
+
+        exitButton.setTexture(exitTex);
+        exitButton.setPosition(30.f, 542.f);
+
+        cursor.setTexture(cursorTex);
+
+        vector<Vector2f> centers = {
+            {441.f, 511.f}, {385.f, 485.f}, {336.f, 458.f}, {296.f, 431.f},
+            {258.f, 404.f}, {226.f, 374.f}, {205.f, 345.f}, {232.f, 318.f},
+            {278.f, 295.f}, {322.f, 281.f}, {359.f, 267.f}, {383.f, 249.f},
+            {353.f, 235.f}, {371.f, 208.f}
+        };
+
+        levelIcons.clear();
+        levelIcons.resize(centers.size());
+
+        for (size_t i = 0; i < centers.size(); ++i) {
+            levelIcons[i].position = centers[i];
+            levelIcons[i].lockSprite.setTexture(padlockTex);
+            levelIcons[i].checkSprite.setTexture(checkTex);
+
+            FloatRect lb = levelIcons[i].lockSprite.getLocalBounds();
+            levelIcons[i].lockSprite.setOrigin(lb.width / 2.f, lb.height / 2.f);
+
+            FloatRect cb = levelIcons[i].checkSprite.getLocalBounds();
+            levelIcons[i].checkSprite.setOrigin(cb.width / 2.f, cb.height / 2.f);
+        }
+
+        syncLevelIconsByProgress();
+        levelMapUIInitialized = true;
+    }
+    catch (const exception& e) {
+        cerr << "[ERROR] Game::initLevelMapUI - " << e.what() << endl;
+    }
+}
+
+void Game::syncLevelIconsByProgress() {
+    // nextToPlay es 1-based (nivel visible que debe jugarse)
+    int nextToPlay = levelManager.getCurrentLevelNumber();
+    if (nextToPlay < 1) { nextToPlay = 1; }
+    if (nextToPlay > static_cast<int>(levelIcons.size())) {
+        nextToPlay = static_cast<int>(levelIcons.size());
+    }
+
+    for (size_t i = 0; i < levelIcons.size(); ++i) {
+        // Reinicio explícito de banderas en cada iteración
+        levelIcons[i].completed = false;
+        levelIcons[i].unlocked = false;
+
+        int levelNumber = static_cast<int>(i) + 1; // 1-based para comparar
+
+        if (levelNumber < nextToPlay) {
+            // Niveles estrictamente anteriores al próximo a jugar -> completados
+            levelIcons[i].completed = true;
+        }
+        else if (levelNumber == nextToPlay) {
+            // Este es el próximo a jugar -> desbloqueado (cursor)
+            levelIcons[i].unlocked = true;
+        }
+        // else: niveles posteriores -> bloqueados (sin flags)
     }
 }

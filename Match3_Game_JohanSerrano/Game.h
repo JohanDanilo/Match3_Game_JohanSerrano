@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <vector>        // <-- asegúrate de incluir
 #include "Board.h"
 #include "LevelManager.h"
 #include "UIManager.h"
@@ -20,8 +21,15 @@ enum class GameState {
     Exit
 };
 
-class Game {
+struct LevelIcon {
+    Vector2f position;      // centro de la “isla” del nivel
+    Sprite lockSprite;      // mostrado si bloqueado
+    Sprite checkSprite;     // mostrado si completado
+    bool unlocked = false;  // true solo para el nivel actual
+    bool completed = false; // true para niveles < actual
+};
 
+class Game {
 private:
     Board board;
     UIManager* uiManager = nullptr;
@@ -41,6 +49,13 @@ private:
     LevelManager levelManager;
     Level* activeLevel = nullptr;
 
+    // ---- LevelMap UI state ----
+    vector<LevelIcon> levelIcons;
+    Sprite cursor;
+    Sprite highScoresButton;
+    Sprite exitButton;
+    bool levelMapUIInitialized = false;
+
 public:
     Game();
     ~Game();
@@ -57,4 +72,8 @@ private:
 
     void startLevel();
     void drawCurrentScene();
+
+    // ---- helpers LevelMap ----
+    void initLevelMapUI();                 // crea sprites y coordenadas
+    void syncLevelIconsByProgress();       // marca completed/unlocked según progreso
 };
