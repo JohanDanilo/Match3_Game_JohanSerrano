@@ -2,22 +2,37 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include <algorithm>
+#include <cctype>
 
 using namespace std;
 namespace fs = filesystem;
 
 const string SAVE_DIR = "saves/";
 
+string PersistenceManager::toUpper(const string& s) {
+    string result = s;
+    transform(result.begin(), result.end(), result.begin(),
+        [](unsigned char c) { return static_cast<char>(toupper(c)); });
+    return result;
+}
+
 void PersistenceManager::saveProgress(const string& playerName, int level, int score) {
     try {
+        if (playerName.empty()) throw runtime_error("Nombre de jugador vacío.");
+
         fs::create_directory(SAVE_DIR);
-        string filename = SAVE_DIR + playerName + ".txt";
-        ofstream file(filename);
+        string safeName = toUpper(playerName);
+        string filename = SAVE_DIR + safeName + ".txt";
+
+        ofstream file(filename, ios::trunc);
         if (!file.is_open()) throw runtime_error("No se pudo abrir el archivo del jugador.");
 
-        file << playerName << " " << level << " " << score << endl;
+        file << safeName << " " << level << " " << score << endl;
         file.close();
-        cout << "[SAVE] Progreso guardado para " << playerName << ": nivel " << level << ", score " << score << endl;
+
+        cout << "[SAVE] Progreso guardado para " << safeName
+            << ": Nivel " << level << ", Score " << score << endl;
     }
     catch (const exception& e) {
         cerr << "[ERROR] PersistenceManager::saveProgress - " << e.what() << endl;
@@ -25,25 +40,26 @@ void PersistenceManager::saveProgress(const string& playerName, int level, int s
 }
 
 bool PersistenceManager::loadProgress(const string& playerName, int& level, int& score) {
-    string filename = SAVE_DIR + playerName + ".txt";
-    ifstream file(filename);
+    string safeName = toUpper(playerName);
+    string filename = SAVE_DIR + safeName + ".txt";
 
+    ifstream file(filename);
     if (!file.is_open()) {
-        cout << "[INFO] No existe progreso previo para " << playerName << endl;
+        cout << "[INFO] No existe progreso previo para " << safeName << endl;
         return false;
     }
 
     string name;
     file >> name >> level >> score;
     file.close();
-    cout << "[LOAD] Progreso cargado: " << name << " Nivel=" << level << " Score=" << score << endl;
+
+    cout << "[LOAD] Progreso cargado: " << name
+        << " Nivel=" << level << " Score=" << score << endl;
     return true;
 }
 
-// Ranking general: lee todos los archivos y ordena por score
 vector<pair<string, int>> PersistenceManager::loadRanking() {
     vector<pair<string, int>> ranking;
-
     if (!fs::exists(SAVE_DIR)) return ranking;
 
     for (const auto& entry : fs::directory_iterator(SAVE_DIR)) {
@@ -51,14 +67,12 @@ vector<pair<string, int>> PersistenceManager::loadRanking() {
         string name;
         int lvl, score;
         if (file >> name >> lvl >> score) {
-            ranking.push_back({ name, score });
+            ranking.push_back({ toUpper(name), score });
         }
     }
 
-    // Orden descendente por score
-    sort(ranking.begin(), ranking.end(), [](auto& a, auto& b) {
-        return a.second > b.second;
-        });
+    sort(ranking.begin(), ranking.end(),
+        [](auto& a, auto& b) { return a.second > b.second; });
 
     return ranking;
 }
