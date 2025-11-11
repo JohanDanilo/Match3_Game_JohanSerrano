@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "ResourceManager.h"
 
+/* ===================== CONSTRUCTOR / DESTRUCTOR ===================== */
 Game::Game() {
     init();
 }
@@ -14,18 +15,28 @@ Game::~Game() {
 void Game::init() {
     cout << "[INIT] Cargando recursos iniciales..." << endl;
 
-    //levelManager.initializeLevels();
-    activeLevel = levelManager.getCurrentLevel();
-    board.setCurrentLevel(activeLevel);
-
     try {
         font = ResourceManager::instance().getFont("assets/gameFont.ttf");
         const Texture& tex = ResourceManager::instance().getTexture("assets/spritesheet.png");
 
         uiManager = new UIManager(&font, tex);
         ux = new UXManager(&font, uiManager);
-
         ux->setScene(SceneType::MainMenu);
+
+        // Intentar cargar progreso guardado
+        if (PersistenceManager::loadProgress(playerName, currentLevelIndex, totalScore)) {
+            cout << "[LOAD] Progreso cargado correctamente:\n";
+            cout << "Jugador: " << playerName << " | Nivel: " << currentLevelIndex << " | Total Score: " << totalScore << endl;
+            levelManager.setCurrentLevelIndex(currentLevelIndex);
+        }
+        else {
+            cout << "[LOAD] No se encontró progreso previo. Iniciando nuevo jugador." << endl;
+            currentLevelIndex = 0;
+        }
+
+        activeLevel = levelManager.getCurrentLevel();
+        board.setCurrentLevel(activeLevel);
+
         cout << "[INIT] UXManager inicializado correctamente." << endl;
     }
     catch (const exception& e) {
@@ -49,9 +60,25 @@ void Game::run() {
 }
 
 /* ===================== MAIN MENU ===================== */
+
+
 void Game::runMainMenu() {
     ux->setScene(SceneType::MainMenu);
     auto& window = ux->getWindow();
+
+    bool enteringName = playerName.empty(); // Solo se pide si no hay jugador
+    std::string tempName = "";
+
+    Text namePrompt("Enter your name:", font, 40);
+    namePrompt.setFillColor(Color::White);
+    namePrompt.setPosition(200, 200);
+
+    Text nameInput("", font, 40);
+    nameInput.setFillColor(Color::White);
+    nameInput.setPosition(200, 260);
+
+    RectangleShape overlay(Vector2f(800.f, 600.f));
+    overlay.setFillColor(Color(0, 255, 255, 100)); // layout cian translúcido
 
     while (ux->isOpen() && state == GameState::MainMenu) {
         Event event;
@@ -59,30 +86,77 @@ void Game::runMainMenu() {
             if (event.type == Event::Closed) {
                 ux->close();
                 running = false;
+                return;
             }
 
-            if (event.type == Event::MouseButtonPressed && event.mouseButton.button == Mouse::Left) {
+            // Ingreso de nombre
+            if (enteringName && event.type == Event::TextEntered) {
+                if (event.text.unicode == '\b' && !tempName.empty()) {
+                    tempName.pop_back(); // retroceso
+                }
+                else if (event.text.unicode == '\r') { // ENTER
+                    if (!tempName.empty()) {
+                        playerName = tempName;
+                        cout << "[INFO] Nombre ingresado: " << playerName << endl;
+
+                        int savedLevel = 1, savedScore = 0;
+
+                        // Si ya existe archivo cargar progreso
+                        if (!PersistenceManager::loadProgress(playerName, savedLevel, savedScore)) {
+                            PersistenceManager::saveProgress(playerName, 1, 0);
+                        }
+
+                        // Sincronizar progreso con LevelManager
+                        levelManager.setCurrentLevelIndex(savedLevel - 1);
+
+                        enteringName = false;
+
+                        // Avanzar directo al mapa de niveles
+                        state = GameState::LevelMap;
+                        return;
+                    }
+                }
+                else if (event.text.unicode < 128 && event.text.unicode >= 32) {
+                    tempName += static_cast<char>(event.text.unicode);
+                }
+            }
+
+            // Botones del menú (solo si no estamos ingresando nombre)
+            if (!enteringName && event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
 
                 // START
                 if (IntRect(321, 547, 160, 48).contains(mousePos)) {
                     ux->startFade(Color::Black, 0.3f, false);
                     state = GameState::LevelMap;
+                    return;
                 }
 
                 // EXIT
                 if (IntRect(706, 45, 70, 32).contains(mousePos)) {
                     ux->close();
                     running = false;
+                    return;
                 }
             }
         }
 
+        // Dibujo de escena
         ux->clear();
         ux->drawBackground("assets/mainMenu.png");
+
+        if (enteringName) {
+            window.draw(overlay);
+            window.draw(namePrompt);
+            nameInput.setString(tempName + "_");
+            window.draw(nameInput);
+        }
+
         ux->display();
     }
 }
+
+
 
 /* ===================== LEVEL MAP ===================== */
 void Game::runLevelMap() {
@@ -103,9 +177,7 @@ void Game::runLevelMap() {
                 Vector2i mousePos = Mouse::getPosition(window);
                 cout << "[DEBUG] Click en LevelMap: (" << mousePos.x << ", " << mousePos.y << ")\n";
 
-                // PLAY
                 if (IntRect(336, 543, 112, 44).contains(mousePos)) {
-                    cout << "[DEBUG] PLAY del LevelMap presionado. Iniciando nivel...\n";
                     startLevel();
                     state = GameState::Playing;
                 }
@@ -119,7 +191,6 @@ void Game::runLevelMap() {
 }
 
 /* ===================== GAMEPLAY ===================== */
-
 void Game::startLevel() {
     activeLevel = levelManager.getCurrentLevel();
     if (!activeLevel) {
@@ -128,13 +199,8 @@ void Game::startLevel() {
         return;
     }
 
-    // Primero se asigna el nivel actual al tablero
     board.setCurrentLevel(activeLevel);
-
-    // Luego se inicializa el tablero usando ese nivel
     board.initialize();
-
-    // Resto igual
     moves = activeLevel->getMaxMoves();
     score = 0;
 
@@ -142,13 +208,10 @@ void Game::startLevel() {
         << " con objetivo: " << activeLevel->getObjective()->getDescription() << endl;
 }
 
-
 void Game::runGameLoop() {
     ux->setScene(SceneType::Gameplay);
     auto& window = ux->getWindow();
     Clock clock;
-
-    cout << "[DEBUG] Iniciando runGameLoop()..." << endl;
 
     while (ux->isOpen() && state == GameState::Playing) {
         Event e;
@@ -167,19 +230,12 @@ void Game::runGameLoop() {
 
         board.update(dt, scoreGained, moveConsumed);
 
-        if (moveConsumed) {
-            moves--;
-            cout << "[DEBUG] Movimiento consumido. Restantes: " << moves << endl;
-        }
-
+        if (moveConsumed) moves--;
         if (scoreGained > 0) {
             score += scoreGained;
-            cout << "[DEBUG] +" << scoreGained << " puntos. Total: " << score << endl;
-
             board.updateScoreObjective(scoreGained);
         }
 
-        // Protección contra nullptr 
         if (activeLevel) {
             uiManager->update(score, moves, activeLevel->getLevelNumber(), activeLevel->getObjective());
         }
@@ -190,34 +246,33 @@ void Game::runGameLoop() {
         ux->drawGameUI(*uiManager);
         ux->display();
 
+        // Cuando se completa el nivel
         if (activeLevel && activeLevel->getObjective()->isCompleted()) {
-            cout << "[INFO] Nivel completado correctamente." << endl;
+            totalScore += score;
+
+            // Guarda progreso y puntuación acumulada
+            PersistenceManager::saveProgress(
+                playerName,
+                levelManager.getCurrentLevelNumber(),
+                totalScore
+            );
+
             state = GameState::LevelComplete;
             break;
         }
 
         if (moves <= 0) {
-            cout << "[INFO] Movimientos agotados. Fin del juego." << endl;
             state = GameState::GameOver;
             break;
         }
     }
-
-    cout << "[DEBUG] runGameLoop() finalizado. Estado siguiente: ";
-    switch (state) {
-    case GameState::LevelComplete: cout << "LevelComplete"; break;
-    case GameState::GameOver: cout << "GameOver"; break;
-    default: cout << "Otro"; break;
-    }
-    cout << endl;
 }
+
 
 /* ===================== LEVEL COMPLETE ===================== */
 void Game::runLevelComplete() {
     ux->setScene(SceneType::LevelComplete);
     auto& window = ux->getWindow();
-
-    cout << "[DEBUG] Entrando a LevelComplete..." << endl;
 
     while (ux->isOpen() && state == GameState::LevelComplete) {
         Event event;
@@ -229,21 +284,13 @@ void Game::runLevelComplete() {
             }
 
             if (event.type == Event::MouseButtonPressed) {
-                Vector2i mousePos = Mouse::getPosition(window);
-                cout << "[DEBUG] Click detectado en LevelComplete (" << mousePos.x << ", " << mousePos.y << ")\n";
-
-                // Avanzar al siguiente nivel antes de regresar al mapa
                 if (levelManager.hasNextLevel()) {
                     levelManager.nextLevel();
-                    activeLevel = levelManager.getCurrentLevel();
-                    cout << "[INFO] Avanzando al nivel " << activeLevel->getLevelNumber() << endl;
                 }
                 else {
-                    cout << "[INFO] Último nivel completado. Reiniciando niveles..." << endl;
                     levelManager.reset();
-                    activeLevel = levelManager.getCurrentLevel();
                 }
-
+                activeLevel = levelManager.getCurrentLevel();
                 state = GameState::LevelMap;
                 return;
             }
@@ -277,8 +324,6 @@ void Game::runGameOver() {
     ux->setScene(SceneType::GameOver);
     auto& window = ux->getWindow();
 
-    cout << "[DEBUG] Entrando a GameOver..." << endl;
-
     while (ux->isOpen() && state == GameState::GameOver) {
         Event event;
         while (ux->pollGlobalEvent(event)) {
@@ -290,11 +335,8 @@ void Game::runGameOver() {
 
             if (event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
-                cout << "[DEBUG] Click en GameOver: (" << mousePos.x << ", " << mousePos.y << ")\n";
 
-                // Botón RESTART
                 if (IntRect(190, 466, 186, 47).contains(mousePos)) {
-                    cout << "[INFO] Reiniciando nivel actual..." << endl;
                     levelManager.resetCurrentLevel();
                     activeLevel = levelManager.getCurrentLevel();
 
@@ -305,14 +347,11 @@ void Game::runGameOver() {
                         moves = activeLevel->getMaxMoves();
                         score = 0;
                     }
-
                     state = GameState::Playing;
                     return;
                 }
 
-                // Botón EXIT regresar al mapa
                 if (IntRect(459, 466, 158, 43).contains(mousePos)) {
-                    cout << "[INFO] Saliendo al mapa de niveles." << endl;
                     state = GameState::LevelMap;
                     return;
                 }
@@ -322,7 +361,6 @@ void Game::runGameOver() {
         ux->clear();
         ux->drawBackground("assets/gameover.png");
 
-        // Caja visual del score: (212–600, 256–402)
         FloatRect scoreBox(212.f, 256.f, 388.f, 146.f);
         Text scoreText("Score: " + to_string(score), font, 60);
         FloatRect textBounds = scoreText.getLocalBounds();
@@ -339,13 +377,9 @@ void Game::runGameOver() {
 
 /* ===================== DRAW ===================== */
 void Game::drawCurrentScene() {
-    switch (ux->getScene()) {
-    case SceneType::Gameplay:
+    if (ux->getScene() == SceneType::Gameplay) {
         ux->drawBackground("assets/background.png");
         ux->drawBoard(board);
         ux->drawGameUI(*uiManager);
-        break;
-    default:
-        break;
     }
 }

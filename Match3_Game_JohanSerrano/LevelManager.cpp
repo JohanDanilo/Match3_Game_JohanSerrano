@@ -103,3 +103,12 @@ void LevelManager::reset() {
 int LevelManager::getCurrentLevelNumber() const {
     return currentLevelIndex + 1;
 }
+
+void LevelManager::setCurrentLevelIndex(int index) {
+    if (index >= 0 && index < levels.size()) {
+        currentLevelIndex = index;
+    }
+    else {
+        currentLevelIndex = 0; // seguridad por si se pasa de rango
+    }
+}

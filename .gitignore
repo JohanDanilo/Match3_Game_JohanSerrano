@@ -416,3 +416,12 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ======================================
+# Custom project rules (Costa Rican Enchanted Gems)
+# ======================================
+
+# Ignorar archivos de progreso del jugador
+saves/*
+# Pero mantener la carpeta saves vacía
+!saves/.gitkeep

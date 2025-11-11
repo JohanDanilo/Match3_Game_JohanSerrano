@@ -143,6 +143,7 @@
     <ClCompile Include="NormalGem.cpp" />
     <ClCompile Include="Objective.cpp" />
     <ClCompile Include="Obstacle.cpp" />
+    <ClCompile Include="PersistenceManager.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="UXManager.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="NormalGem.h" />
     <ClInclude Include="Objective.h" />
     <ClInclude Include="Obstacle.h" />
+    <ClInclude Include="PersistenceManager.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="UIManager.h" />
     <ClInclude Include="UXManager.h" />

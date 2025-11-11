@@ -6,6 +6,7 @@
 #include "UIManager.h"
 #include "UXManager.h"
 #include "Objective.h"
+#include "PersistenceManager.h"
 
 using namespace sf;
 using namespace std;
@@ -28,15 +29,17 @@ private:
     Font font;
     Texture uiTexture;
 
+    string playerName;
     bool running = true;
     GameState state = GameState::MainMenu;
-    int score = 0;
+
+    int score = 0;           // puntaje del nivel actual
+    int totalScore = 0;      // puntaje acumulado total
     int moves = 20;
+    int currentLevelIndex = 0;
 
-    LevelManager levelManager;     
+    LevelManager levelManager;
     Level* activeLevel = nullptr;
-
-    
 
 public:
     Game();

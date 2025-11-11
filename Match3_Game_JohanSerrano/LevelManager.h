@@ -27,4 +27,7 @@ public:
     void reset();
     void resetCurrentLevel();
     int getCurrentLevelNumber() const;
+    void setCurrentLevelIndex(int index);
+
+
 };
