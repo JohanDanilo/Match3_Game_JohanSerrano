@@ -424,39 +424,34 @@ FodyWeavers.xsd
 # Custom project rules (Costa Rican Enchanted Gems)
 # ======================================
 
-# Ignorar archivos de progreso del jugador
+# === 1️ Ignorar archivos de progreso del jugador ===
 saves/*
-# Pero mantener la carpeta saves vacía
 !saves/.gitkeep
 
-# ======================================
-# Incluir carpeta x64 raíz (build ejecutable con SFML)
-# ======================================
-
-# No ignorar la carpeta x64 de la raíz
+# === 2️ Incluir carpeta x64 raíz (build ejecutable con SFML) ===
+# No ignorar la carpeta base
 !/x64/
 !/x64/Debug/
 !/x64/Release/
 
-# Mantener solo los archivos esenciales del ejecutable
-!/x64/Debug/assets/
-!/x64/Debug/saves/
-!/x64/Debug/*.dll
-!/x64/Debug/*.exe
+# === 3️ Ignorar binarios, símbolos y librerías ===
+x64/**/*.exe
+x64/**/*.pdb
+x64/**/*.dll
 
-# Evitar incluir archivos intermedios y logs dentro de x64
+# === 4️ Mantener las carpetas Debug y Release vacías (solo estructura) ===
+!x64/Debug/.gitkeep
+!x64/Release/.gitkeep
+
+# === 5️ Ignorar saves generados en builds ===
+x64/**/saves/*
+!x64/**/saves/.gitkeep
+
+# === 6️ Ignorar duplicaciones de assets dentro de builds ===
+x64/**/assets/
+!x64/Debug/assets/
+!x64/Release/assets/
+
+# === 7️ Ignorar logs e intermedios de build ===
 x64/**/Intermediate/
 x64/**/Logs/
-
-# ======================================
-# Evitar duplicación de assets dentro de builds
-# ======================================
-x64/**/assets/
-x64/**/Intermediate/
-x64/**/Release/
-
-# ======================================
-# Evitar subir archivos de progreso generados en tiempo de ejecución
-# ======================================
-x64/**/saves/*.txt
-!x64/**/saves/.gitkeep

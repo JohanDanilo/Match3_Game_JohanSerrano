@@ -36,7 +36,7 @@ void Board::initialize() {
     srand(static_cast<unsigned int>(time(0)));
 
     try {
-        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+        const Texture& texture = ResourceManager::instance().getTexture("../assets/spritesheet.png");
 
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
@@ -629,7 +629,7 @@ void Board::applyGravity() {
 
 void Board::refill() {
     try {
-        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+        const Texture& texture = ResourceManager::instance().getTexture("../assets/spritesheet.png");
 
         for (int c = 0; c < COLS; c++) {
             for (int r = ROWS - 1; r >= 0; r--) {
@@ -652,7 +652,7 @@ void Board::refill() {
 
 void Board::spawnGem(int r, int c) {
     try {
-        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+        const Texture& texture = ResourceManager::instance().getTexture("../assets/spritesheet.png");
 
         if (grid[r][c]) {
             delete grid[r][c];
@@ -674,7 +674,7 @@ void Board::spawnGem(int r, int c) {
 
 void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     try {
-        const Texture& texture = ResourceManager::instance().getTexture("assets/spritesheet.png");
+        const Texture& texture = ResourceManager::instance().getTexture("../assets/spritesheet.png");
 
         if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
             return;

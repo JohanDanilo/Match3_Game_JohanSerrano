@@ -8,7 +8,7 @@ using namespace std;
 
 LevelManager::LevelManager() : currentLevelIndex(0) {
     // Carga automática desde archivo de texto
-    loadLevelsFromFile("assets/data/levels.txt");
+    loadLevelsFromFile("../assets/data/levels.txt");
 }
 
 LevelManager::~LevelManager() {

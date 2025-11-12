@@ -16,8 +16,8 @@ Game::~Game() {
 void Game::init() {
     cout << "[INIT] Cargando recursos iniciales..." << endl;
     try {
-        font = ResourceManager::instance().getFont("assets/gameFont.ttf");
-        const Texture& tex = ResourceManager::instance().getTexture("assets/spritesheet.png");
+        font = ResourceManager::instance().getFont("../assets/gameFont.ttf");
+        const Texture& tex = ResourceManager::instance().getTexture("../assets/spritesheet.png");
 
         uiManager = new UIManager(&font, tex);
         ux = new UXManager(&font, uiManager);
@@ -147,7 +147,7 @@ void Game::runMainMenu() {
 
         // --- Renderizado ---
         ux->clear();
-        ux->drawBackground("assets/mainMenu.png");
+        ux->drawBackground("../assets/mainMenu.png");
 
         if (enteringName) {
             window.draw(overlay);
@@ -207,7 +207,7 @@ void Game::runLevelMap() {
         }
 
         ux->clear();
-        ux->drawBackground("assets/LevelsMapFinal.png");
+        ux->drawBackground("../assets/LevelsMapFinal.png");
 
         for (size_t i = 0; i < levelIcons.size(); ++i) {
             if (levelIcons[i].completed) {
@@ -238,8 +238,8 @@ void Game::runHighScores() {
     ux->setScene(SceneType::HighScores);
     auto& window = ux->getWindow();
 
-    const Texture& backTex = ResourceManager::instance().getTexture("assets/back.png");
-    const Texture& bgTex = ResourceManager::instance().getTexture("assets/highScoresBackGround.png");
+    const Texture& backTex = ResourceManager::instance().getTexture("../assets/back.png");
+    const Texture& bgTex = ResourceManager::instance().getTexture("../assets/highScoresBackGround.png");
 
     Sprite background(bgTex);
     Sprite backButton(backTex);
@@ -389,7 +389,7 @@ void Game::runGameLoop() {
             uiManager->update(score, moves, activeLevel->getLevelNumber(), activeLevel->getObjective());
 
         ux->clear();
-        ux->drawBackground("assets/background.png");
+        ux->drawBackground("../assets/background.png");
         ux->drawBoard(board);
         ux->drawGameUI(*uiManager);
         ux->display();
@@ -451,7 +451,7 @@ void Game::runLevelComplete() {
         }
 
         ux->clear();
-        ux->drawBackground("assets/background.png");
+        ux->drawBackground("../assets/background.png");
 
         RectangleShape overlay(Vector2f(800.f, 600.f));
         overlay.setFillColor(Color(0, 255, 0, 150));
@@ -515,7 +515,7 @@ void Game::runGameOver() {
         }
 
         ux->clear();
-        ux->drawBackground("assets/gameover.png");
+        ux->drawBackground("../assets/gameover.png");
 
         FloatRect scoreBox(212.f, 256.f, 388.f, 146.f);
         Text scoreText("Score: " + to_string(score), font, 60);
@@ -569,11 +569,11 @@ void Game::runGameWon() {
 /* ===================== LEVEL MAP UI ===================== */
 void Game::initLevelMapUI() {
     try {
-        const Texture& padlockTex = ResourceManager::instance().getTexture("assets/padlock.png");
-        const Texture& checkTex = ResourceManager::instance().getTexture("assets/completedLevel.png");
-        const Texture& cursorTex = ResourceManager::instance().getTexture("assets/cursor.png");
-        const Texture& hsTex = ResourceManager::instance().getTexture("assets/highScores.png");
-        const Texture& exitTex = ResourceManager::instance().getTexture("assets/exit.png");
+        const Texture& padlockTex = ResourceManager::instance().getTexture("../assets/padlock.png");
+        const Texture& checkTex = ResourceManager::instance().getTexture("../assets/completedLevel.png");
+        const Texture& cursorTex = ResourceManager::instance().getTexture("../assets/cursor.png");
+        const Texture& hsTex = ResourceManager::instance().getTexture("../assets/highScores.png");
+        const Texture& exitTex = ResourceManager::instance().getTexture("../assets/exit.png");
 
         highScoresButton.setTexture(hsTex);
         highScoresButton.setPosition(680.f, 542.f);
@@ -637,7 +637,7 @@ void Game::drawCurrentScene() {
 
     switch (state) {
     case GameState::Playing: {
-        ux->drawBackground("assets/background.png");
+        ux->drawBackground("../assets/background.png");
         ux->drawBoard(board);
         ux->drawGameUI(*uiManager);
         break;

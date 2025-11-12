@@ -118,7 +118,7 @@ void UIManager::draw(RenderWindow& window) {
 void UIManager::drawHighScores(RenderWindow& window, const Font& font,
     const vector<pair<string, int>>& highscores) {
     // Fondo (la imagen bonita del potrero)
-    const Texture& bgTex = ResourceManager::instance().getTexture("assets/highScoresBackGround.png");
+    const Texture& bgTex = ResourceManager::instance().getTexture("../assets/highScoresBackGround.png");
     Sprite background(bgTex);
     window.draw(background);
 
