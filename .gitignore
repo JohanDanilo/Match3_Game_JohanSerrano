@@ -455,3 +455,7 @@ x64/**/assets/
 # === 7️ Ignorar logs e intermedios de build ===
 x64/**/Intermediate/
 x64/**/Logs/
+
+# Ignorar archivos de progreso del jugador
+saves/*
+!saves/.gitkeep
