@@ -123,15 +123,8 @@
       <AdditionalDependencies>sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;sfml-audio-d.lib;sfml-network-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>REM === COPIAR DLLs DE SFML AL DIRECTORIO DE SALIDA ===
-xcopy /Y /I "$(ProjectDir)..\external\SFML-2.6.2\bin\*.dll" "$(OutDir)"
-
-REM === COPIAR ASSETS (IMÁGENES, FONDOS, FUENTES, ETC.) ===
-xcopy /Y /I /E "$(ProjectDir)..\assets" "$(OutDir)assets"
-
-REM === COPIAR CARPETA DE SAVES (SI EXISTE) ===
-xcopy /Y /I /E "$(ProjectDir)..\saves" "$(OutDir)saves"
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -152,15 +145,8 @@ xcopy /Y /I /E "$(ProjectDir)..\saves" "$(OutDir)saves"
       <AdditionalDependencies>sfml-graphics.lib;sfml-window.lib;sfml-system.lib;sfml-audio.lib;sfml-network.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>REM === COPIAR DLLs DE SFML AL DIRECTORIO DE SALIDA ===
-xcopy /Y /I "$(ProjectDir)..\external\SFML-2.6.2\bin\*.dll" "$(OutDir)"
-
-REM === COPIAR ASSETS (IMÁGENES, FONDOS, FUENTES, ETC.) ===
-xcopy /Y /I /E "$(ProjectDir)..\assets" "$(OutDir)assets"
-
-REM === COPIAR CARPETA DE SAVES (SI EXISTE) ===
-xcopy /Y /I /E "$(ProjectDir)..\saves" "$(OutDir)saves"
-</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
