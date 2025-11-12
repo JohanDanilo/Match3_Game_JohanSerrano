@@ -112,3 +112,7 @@ void LevelManager::setCurrentLevelIndex(int index) {
         currentLevelIndex = 0; // seguridad por si se pasa de rango
     }
 }
+
+int LevelManager::getTotalLevels() const {
+    return static_cast<int>(levels.size());
+}

@@ -29,5 +29,8 @@ public:
     int getCurrentLevelNumber() const;
     void setCurrentLevelIndex(int index);
 
+    int getTotalLevels() const;
+
+
 
 };

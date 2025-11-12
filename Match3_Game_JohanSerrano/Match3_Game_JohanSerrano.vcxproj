@@ -144,6 +144,7 @@
     <ClCompile Include="Objective.cpp" />
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="PersistenceManager.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="UXManager.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Objective.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="PersistenceManager.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="UIManager.h" />
     <ClInclude Include="UXManager.h" />

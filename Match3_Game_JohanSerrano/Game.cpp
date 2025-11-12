@@ -1,7 +1,8 @@
 #include "Game.h"
 #include "ResourceManager.h"
+#include "Player.h"
+#include "PersistenceManager.h"
 
-/* ===================== CONSTRUCTOR / DESTRUCTOR ===================== */
 Game::Game() {
     init();
 }
@@ -14,7 +15,6 @@ Game::~Game() {
 /* ===================== INIT ===================== */
 void Game::init() {
     cout << "[INIT] Cargando recursos iniciales..." << endl;
-
     try {
         font = ResourceManager::instance().getFont("assets/gameFont.ttf");
         const Texture& tex = ResourceManager::instance().getTexture("assets/spritesheet.png");
@@ -22,8 +22,6 @@ void Game::init() {
         uiManager = new UIManager(&font, tex);
         ux = new UXManager(&font, uiManager);
         ux->setScene(SceneType::MainMenu);
-
-        // No se carga progreso aquí, se hace correctamente en runMainMenu()
 
         activeLevel = levelManager.getCurrentLevel();
         board.setCurrentLevel(activeLevel);
@@ -47,6 +45,7 @@ void Game::run() {
         case GameState::Playing:       runGameLoop(); break;
         case GameState::LevelComplete: runLevelComplete(); break;
         case GameState::GameOver:      runGameOver(); break;
+        case GameState::HighScores:    runHighScores(); break;
         case GameState::Exit:          running = false; break;
         }
     }
@@ -57,7 +56,7 @@ void Game::runMainMenu() {
     ux->setScene(SceneType::MainMenu);
     auto& window = ux->getWindow();
 
-    bool enteringName = playerName.empty();
+    bool enteringName = currentPlayer.getName().empty();
     std::string tempName = "";
 
     Text namePrompt("Enter your name:", font, 40);
@@ -69,7 +68,7 @@ void Game::runMainMenu() {
     nameInput.setPosition(200, 260);
 
     RectangleShape overlay(Vector2f(800.f, 600.f));
-    overlay.setFillColor(Color(0, 255, 255, 100)); // layout cian translúcido
+    overlay.setFillColor(Color(0, 255, 255, 100));
 
     while (ux->isOpen() && state == GameState::MainMenu) {
         Event event;
@@ -80,51 +79,41 @@ void Game::runMainMenu() {
                 return;
             }
 
-            // Ingreso de nombre
+            // --- Ingreso de nombre ---
             if (enteringName && event.type == Event::TextEntered) {
                 if (event.text.unicode == '\b' && !tempName.empty()) {
                     tempName.pop_back();
                 }
-                else if (event.text.unicode == '\r') { // ENTER
-                    if (!tempName.empty()) {
-                        playerName = tempName;
-                        cout << "[INFO] Nombre ingresado: " << playerName << endl;
+                else if (event.text.unicode == '\r' && !tempName.empty()) {
+                    currentPlayer = Player(tempName);
+                    cout << "[INFO] Nombre ingresado: " << currentPlayer.getName() << endl;
 
-                        int savedLevel = 1, savedScore = 0;
-
-                        // Si ya existe archivo, cargar progreso; si no, crearlo nuevo
-                        if (!PersistenceManager::loadProgress(playerName, savedLevel, savedScore)) {
-                            PersistenceManager::saveProgress(playerName, 1, 0);
-                        }
-
-                        // Sincronizar progreso con LevelManager
-                        levelManager.setCurrentLevelIndex(savedLevel-1);
-                        totalScore = savedScore;
-
-                        syncLevelIconsByProgress();
-
-                        enteringName = false;
-                        state = GameState::LevelMap;
-                        return;
+                    if (!PersistenceManager::loadProgress(currentPlayer)) {
+                        PersistenceManager::saveProgress(currentPlayer);
                     }
+
+                    currentPlayer.updateState(levelManager.getTotalLevels());
+                    levelManager.setCurrentLevelIndex(currentPlayer.getLevel() - 1);
+                    syncLevelIconsByProgress();
+
+                    enteringName = false;
+                    state = GameState::LevelMap;
+                    return;
                 }
                 else if (event.text.unicode < 128 && event.text.unicode >= 32) {
                     tempName += static_cast<char>(event.text.unicode);
                 }
             }
 
-            // Botones del menú (solo si no estamos ingresando nombre)
+            // --- Botones del menú (si ya ingresó nombre) ---
             if (!enteringName && event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
 
-                // START
                 if (IntRect(321, 547, 160, 48).contains(mousePos)) {
-                    ux->startFade(Color::Black, 0.3f, false);
                     state = GameState::LevelMap;
                     return;
                 }
 
-                // EXIT
                 if (IntRect(706, 45, 70, 32).contains(mousePos)) {
                     ux->close();
                     running = false;
@@ -133,7 +122,6 @@ void Game::runMainMenu() {
             }
         }
 
-        // Dibujo de escena
         ux->clear();
         ux->drawBackground("assets/mainMenu.png");
 
@@ -153,9 +141,8 @@ void Game::runLevelMap() {
     ux->setScene(SceneType::LevelMap);
     auto& window = ux->getWindow();
 
-    if (!levelMapUIInitialized) {
+    if (!levelMapUIInitialized)
         initLevelMapUI();
-    }
 
     syncLevelIconsByProgress();
 
@@ -173,19 +160,18 @@ void Game::runLevelMap() {
             if (event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
 
-                // --- Botón PLAY (zona exacta del fondo) ---
                 if (IntRect(336, 543, 112, 44).contains(mousePos)) {
                     startLevel();
                     state = GameState::Playing;
                     return;
                 }
 
-                // --- Botón HIGH SCORES ---
                 if (highScoresButton.getGlobalBounds().contains((Vector2f)mousePos)) {
-                    cout << "[UI] High Scores presionado." << endl;
+                    cout << "[UI] Mostrando High Scores..." << endl;
+                    state = GameState::HighScores;
+                    return;
                 }
 
-                // --- Botón EXIT ---
                 if (exitButton.getGlobalBounds().contains((Vector2f)mousePos)) {
                     ux->close();
                     running = false;
@@ -194,11 +180,9 @@ void Game::runLevelMap() {
             }
         }
 
-        // --- Renderizado ---
         ux->clear();
         ux->drawBackground("assets/LevelsMapFinal.png");
 
-        // Dibuja candados y checks
         for (size_t i = 0; i < levelIcons.size(); ++i) {
             if (levelIcons[i].completed) {
                 levelIcons[i].checkSprite.setPosition(levelIcons[i].position);
@@ -210,19 +194,121 @@ void Game::runLevelMap() {
             }
         }
 
-        // Cursor del nivel actual (a la izquierda del nivel desbloqueado)
         int current = levelManager.getCurrentLevelNumber() - 1;
-        if (current < 0) current = 0;
-        if (current >= (int)levelIcons.size()) current = (int)levelIcons.size() - 1;
+        current = std::clamp(current, 0, (int)levelIcons.size() - 1);
 
         Vector2f pos = levelIcons[current].position;
         cursor.setPosition(pos.x - 75.f, pos.y - 20.f);
         window.draw(cursor);
 
-        // Botones fijos
         window.draw(highScoresButton);
         window.draw(exitButton);
+        ux->display();
+    }
+}
 
+/* ===================== HIGH SCORES ===================== */
+void Game::runHighScores() {
+    ux->setScene(SceneType::HighScores);
+    auto& window = ux->getWindow();
+
+    const Texture& backTex = ResourceManager::instance().getTexture("assets/back.png");
+    const Texture& bgTex = ResourceManager::instance().getTexture("assets/highScoresBackGround.png");
+
+    Sprite background(bgTex);
+    Sprite backButton(backTex);
+    backButton.setPosition(50.f, 40.f);
+
+    RectangleShape panel(Vector2f(600.f, 350.f));
+    panel.setFillColor(Color(255, 255, 255, 140));
+    panel.setPosition(100.f, 130.f);
+
+    Text title("COSTA RICAN ENCHANTED GEMS", font, 42);
+    title.setFillColor(Color::Black);
+    title.setStyle(Text::Bold);
+    FloatRect tb = title.getLocalBounds();
+    title.setOrigin(tb.width / 2.f, tb.height / 2.f);
+    title.setPosition(400.f, 168.f);
+
+    Text subtitle("HALL OF FAME", font, 34);
+    subtitle.setFillColor(Color::Black);
+    subtitle.setStyle(Text::Bold);
+    FloatRect sb = subtitle.getLocalBounds();
+    subtitle.setOrigin(sb.width / 2.f, sb.height / 2.f);
+    subtitle.setPosition(400.f, 205.f);
+
+    Text playerHeader("PLAYER", font, 26);
+    playerHeader.setFillColor(Color::Black);
+    playerHeader.setStyle(Text::Bold);
+    playerHeader.setPosition(140.f, 240.f);
+
+    Text scoreHeader("SCORE", font, 26);
+    scoreHeader.setFillColor(Color::Black);
+    scoreHeader.setStyle(Text::Bold);
+    scoreHeader.setPosition(370.f, 240.f);
+
+    Text stateHeader("STATE", font, 26);
+    stateHeader.setFillColor(Color::Black);
+    stateHeader.setStyle(Text::Bold);
+    stateHeader.setPosition(580.f, 240.f);
+
+    std::vector<Player> highscores = PersistenceManager::loadRankingPlayers();
+
+    std::vector<Text> scoreTexts;
+    float startY = 285.f;
+    int displayCount = std::min(5, (int)highscores.size());
+
+    for (int i = 0; i < displayCount; ++i) {
+        const Player& p = highscores[i];
+
+        Text nameText(p.getName(), font, 24);
+        nameText.setFillColor(Color::Black);
+        nameText.setPosition(140.f, startY + i * 50.f);
+
+        Text scoreText(std::to_string(p.getScore()), font, 24);
+        scoreText.setFillColor(Color::Black);
+        scoreText.setPosition(370.f, startY + i * 50.f);
+
+        Text stateText(p.getState(), font, 24);
+        stateText.setFillColor(Color::Black);
+        stateText.setPosition(580.f, startY + i * 50.f);
+
+        scoreTexts.push_back(nameText);
+        scoreTexts.push_back(scoreText);
+        scoreTexts.push_back(stateText);
+    }
+
+    while (ux->isOpen() && state == GameState::HighScores) {
+        Event event;
+        while (ux->pollGlobalEvent(event)) {
+            if (event.type == Event::Closed) {
+                ux->close();
+                running = false;
+                return;
+            }
+
+            if (event.type == Event::MouseButtonPressed) {
+                Vector2i mousePos = Mouse::getPosition(window);
+                if (backButton.getGlobalBounds().contains((Vector2f)mousePos)) {
+                    state = GameState::LevelMap;
+                    return;
+                }
+            }
+        }
+
+        ux->clear();
+        window.draw(background);
+        window.draw(panel);
+        window.draw(title);
+        window.draw(subtitle);
+        window.draw(playerHeader);
+        window.draw(scoreHeader);
+        window.draw(stateHeader);
+
+        for (auto& t : scoreTexts)
+            window.draw(t);
+
+        window.draw(backButton);
         ux->display();
     }
 }
@@ -273,9 +359,8 @@ void Game::runGameLoop() {
             board.updateScoreObjective(scoreGained);
         }
 
-        if (activeLevel) {
+        if (activeLevel)
             uiManager->update(score, moves, activeLevel->getLevelNumber(), activeLevel->getObjective());
-        }
 
         ux->clear();
         ux->drawBackground("assets/background.png");
@@ -283,9 +368,8 @@ void Game::runGameLoop() {
         ux->drawGameUI(*uiManager);
         ux->display();
 
-        // Cuando se completa el nivel
         if (activeLevel && activeLevel->getObjective()->isCompleted()) {
-            totalScore += score;
+            currentPlayer.setScore(currentPlayer.getScore() + score);
             state = GameState::LevelComplete;
             break;
         }
@@ -312,27 +396,16 @@ void Game::runLevelComplete() {
             }
 
             if (event.type == Event::MouseButtonPressed) {
-                // Avanzar al siguiente nivel o reiniciar al primero si terminó todos
-                if (levelManager.hasNextLevel()) {
-                    levelManager.nextLevel();
-                }
-                else {
-                    levelManager.reset(); // reinicia a nivel 1 si ya completó todos
-                }
+                if (levelManager.hasNextLevel()) levelManager.nextLevel();
+                else levelManager.reset();
 
-                // Obtener el siguiente nivel a jugar (ya actualizado tras nextLevel)
-                int nextToPlay = levelManager.getCurrentLevelNumber();
+                currentPlayer.setLevel(levelManager.getCurrentLevelNumber());
+                currentPlayer.setScore(currentPlayer.getScore() + score);
+                currentPlayer.updateState(levelManager.getTotalLevels());
 
-                // Guardar progreso actualizado (próximo nivel a jugar)
-                PersistenceManager::saveProgress(
-                    playerName,
-                    nextToPlay,
-                    totalScore
-                );
+                PersistenceManager::saveProgress(currentPlayer);
 
-                // Actualizar iconos visuales (candados, checks y cursor)
                 syncLevelIconsByProgress();
-
                 activeLevel = levelManager.getCurrentLevel();
                 state = GameState::LevelMap;
                 return;
@@ -361,7 +434,6 @@ void Game::runLevelComplete() {
         ux->display();
     }
 }
-
 
 /* ===================== GAME OVER ===================== */
 void Game::runGameOver() {
@@ -396,6 +468,7 @@ void Game::runGameOver() {
                 }
 
                 if (IntRect(459, 466, 158, 43).contains(mousePos)) {
+                    PersistenceManager::saveProgress(currentPlayer); // ? guarda progreso
                     state = GameState::LevelMap;
                     return;
                 }
@@ -419,16 +492,7 @@ void Game::runGameOver() {
     }
 }
 
-/* ===================== DRAW ===================== */
-void Game::drawCurrentScene() {
-    if (ux->getScene() == SceneType::Gameplay) {
-        ux->drawBackground("assets/background.png");
-        ux->drawBoard(board);
-        ux->drawGameUI(*uiManager);
-    }
-}
-
-/* ===================== LEVEL MAP UI INIT ===================== */
+/* ===================== LEVEL MAP UI ===================== */
 void Game::initLevelMapUI() {
     try {
         const Texture& padlockTex = ResourceManager::instance().getTexture("assets/padlock.png");
@@ -476,28 +540,18 @@ void Game::initLevelMapUI() {
 }
 
 void Game::syncLevelIconsByProgress() {
-    // nextToPlay es 1-based (nivel visible que debe jugarse)
     int nextToPlay = levelManager.getCurrentLevelNumber();
-    if (nextToPlay < 1) { nextToPlay = 1; }
-    if (nextToPlay > static_cast<int>(levelIcons.size())) {
-        nextToPlay = static_cast<int>(levelIcons.size());
-    }
+    nextToPlay = std::clamp(nextToPlay, 1, (int)levelIcons.size());
 
     for (size_t i = 0; i < levelIcons.size(); ++i) {
-        // Reinicio explícito de banderas en cada iteración
         levelIcons[i].completed = false;
         levelIcons[i].unlocked = false;
 
-        int levelNumber = static_cast<int>(i) + 1; // 1-based para comparar
+        int levelNumber = (int)i + 1;
 
-        if (levelNumber < nextToPlay) {
-            // Niveles estrictamente anteriores al próximo a jugar -> completados
+        if (levelNumber < nextToPlay)
             levelIcons[i].completed = true;
-        }
-        else if (levelNumber == nextToPlay) {
-            // Este es el próximo a jugar -> desbloqueado (cursor)
+        else if (levelNumber == nextToPlay)
             levelIcons[i].unlocked = true;
-        }
-        // else: niveles posteriores -> bloqueados (sin flags)
     }
 }

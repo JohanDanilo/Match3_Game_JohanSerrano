@@ -1,3 +1,0 @@
-playerName=JOHAN
-currentLevel=2
-totalScore=60

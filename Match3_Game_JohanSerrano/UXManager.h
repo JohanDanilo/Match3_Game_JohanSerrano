@@ -14,7 +14,8 @@ enum class SceneType {
     LevelMap,
     Gameplay,
     LevelComplete,
-    GameOver
+    GameOver,
+    HighScores
 };
 
 class UXManager {

@@ -1,13 +1,14 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <vector>        // <-- asegúrate de incluir
+#include <vector>
 #include "Board.h"
 #include "LevelManager.h"
 #include "UIManager.h"
 #include "UXManager.h"
 #include "Objective.h"
 #include "PersistenceManager.h"
+#include "Player.h"
 
 using namespace sf;
 using namespace std;
@@ -18,15 +19,16 @@ enum class GameState {
     Playing,
     LevelComplete,
     GameOver,
+    HighScores,
     Exit
 };
 
 struct LevelIcon {
-    Vector2f position;      // centro de la “isla” del nivel
-    Sprite lockSprite;      // mostrado si bloqueado
-    Sprite checkSprite;     // mostrado si completado
-    bool unlocked = false;  // true solo para el nivel actual
-    bool completed = false; // true para niveles < actual
+    Vector2f position;
+    Sprite lockSprite;
+    Sprite checkSprite;
+    bool unlocked = false;
+    bool completed = false;
 };
 
 class Game {
@@ -37,19 +39,18 @@ private:
     Font font;
     Texture uiTexture;
 
-    string playerName;
+    Player currentPlayer;        // reemplaza playerName, score, totalScore
     bool running = true;
     GameState state = GameState::MainMenu;
 
-    int score = 0;           // puntaje del nivel actual
-    int totalScore = 0;      // puntaje acumulado total
+    int score = 0;               // puntaje del nivel actual
     int moves = 20;
     int currentLevelIndex = 0;
 
     LevelManager levelManager;
     Level* activeLevel = nullptr;
 
-    // ---- LevelMap UI state ----
+    // ---- LevelMap UI ----
     vector<LevelIcon> levelIcons;
     Sprite cursor;
     Sprite highScoresButton;
@@ -66,6 +67,7 @@ private:
     void init();
     void runMainMenu();
     void runLevelMap();
+    void runHighScores();
     void runGameLoop();
     void runLevelComplete();
     void runGameOver();
@@ -73,7 +75,6 @@ private:
     void startLevel();
     void drawCurrentScene();
 
-    // ---- helpers LevelMap ----
-    void initLevelMapUI();                 // crea sprites y coordenadas
-    void syncLevelIconsByProgress();       // marca completed/unlocked según progreso
+    void initLevelMapUI();
+    void syncLevelIconsByProgress();
 };
