@@ -425,8 +425,9 @@ FodyWeavers.xsd
 # ======================================
 
 # === 1️ Ignorar archivos de progreso del jugador ===
-saves/*
-!saves/.gitkeep
+
+/Match3_Game_JohanSerrano/saves/*
+!/Match3_Game_JohanSerrano/saves/.gitkeep
 
 # Ignorar cualquier saves dentro de builds temporales ===
 x64/**/saves/
