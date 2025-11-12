@@ -1,0 +1,17 @@
+# Formato: <Nivel> <TipoObjetivo> <Meta> <TipoGema> <Movimientos> <Obstáculos>
+# TipoObjetivo: 0 = CollectGems  |  1=Score  |  2=ClearObstacles
+
+1  0 8 0 30 0
+2  0 10 1 28 0
+3  1 900 0 26 0
+4  0 12 2 25 0
+5  2 6 0 25 6
+6  1 1300 0 24 0
+7  0 15 3 23 0
+8  2 8  0 22 8
+9  1 1600 0 22 0
+10 0 18 4 21 0
+11 2 10 0 20 10
+12 0 20 1 19 0
+13 1 2200 0 18 0
+14 2 12 0 18 12
