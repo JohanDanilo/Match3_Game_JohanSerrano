@@ -13,7 +13,7 @@
 - [Instalación](#-tutorial-de-instalación--costa-rican-enchanted-gems)
 - [Distribución del Ejecutable](#-distribución-del-ejecutable)
 - [Estructura del Proyecto](#️-estructura-del-proyecto)
-- [Arquitectura](../../../OneDrive/Escritorio/readme_complete.md#️-arquitectura)
+- [Arquitectura](#️-arquitectura)
 - [Mecánicas de Juego](#-mecánicas-de-juego)
 - [Sistema de Niveles](#-sistema-de-niveles)
 - [Capturas de Pantalla](#️-capturas-de-pantalla)
@@ -108,15 +108,6 @@ El juego se abrirá en una nueva ventana.
 
 ---
 
-### ✅ Requisitos previos
-
-- Visual Studio 2022 o superior  
-- SFML 2.6.2 (incluida en la carpeta `/external`)  
-- Compilador C++ (MSVC recomendado)  
-- Windows 10/11  
-
----
-
 ## 📦 Distribución del Ejecutable
 
 Para ejecutar el juego en otra PC sin Visual Studio, copia la carpeta completa:
@@ -181,10 +172,9 @@ Match3_Game_JohanSerrano/
 └── x64/ # Build final (Debug / Release)
 
 ```
-
 ---
 
-## 🏗️ [Arquitectura]
+## 🏗️ Arquitectura
 
 El proyecto sigue principios de **Programación Orientada a Objetos** con una clara separación de responsabilidades:
 
@@ -195,6 +185,7 @@ El proyecto sigue principios de **Programación Orientada a Objetos** con una cl
 | **Game**                  | Controla el ciclo principal del juego y las escenas.          |
 | **Board**                 | Maneja el tablero 8×8, detección de combinaciones y gravedad. |
 | **Gem**                   | Representa cada gema (posición, tipo, animación).             |
+| **Player**                | Representa un jugador, con nombre, puntaje, nivel actual, etc.|
 | **Level / LevelManager**  | Gestionan los niveles, objetivos y progresión.                |
 | **Objective**             | Define el tipo de objetivo (Collect, ClearObstacles, Score).  |
 | **Obstacle**              | Representa elementos bloqueantes (rocas, hielo, etc.).        |
