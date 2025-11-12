@@ -10,7 +10,7 @@
 
 - [Características Principales](#-características-principales)
 - [Requisitos del Sistema](#️-requisitos-del-sistema)
-- [Instalación](#-instalación)
+- [Instalación](#-tutorial-de-instalación--costa-rican-enchanted-gems)
 - [Distribución del Ejecutable](#-distribución-del-ejecutable)
 - [Estructura del Proyecto](#️-estructura-del-proyecto)
 - [Arquitectura](../../../OneDrive/Escritorio/readme_complete.md#️-arquitectura)
@@ -130,6 +130,8 @@ x64/Release/
 ---
 
 ## 🗂️ Estructura del Proyecto
+
+```
 
 Match3_Game_JohanSerrano/
 │
