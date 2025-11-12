@@ -15,16 +15,12 @@ private:
     ResourceManager() = default;  // constructor privado (singleton)
 
 public:
-    // --- Texturas ---
     const Texture& getTexture(const std::string& filename);
 
-    // --- Fuentes ---
     const Font& getFont(const std::string& filename);
 
-    // --- Singleton ---
     static ResourceManager& instance();
 
-    // --- No copiable ---
     ResourceManager(const ResourceManager&) = delete;
     void operator=(const ResourceManager&) = delete;
 };

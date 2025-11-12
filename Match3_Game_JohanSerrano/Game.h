@@ -40,7 +40,7 @@ private:
     Font font;
     Texture uiTexture;
 
-    Player currentPlayer;        // reemplaza playerName, score, totalScore
+    Player currentPlayer;
     bool running = true;
     GameState state = GameState::MainMenu;
 
@@ -51,7 +51,6 @@ private:
     LevelManager levelManager;
     Level* activeLevel = nullptr;
 
-    // ---- LevelMap UI ----
     vector<LevelIcon> levelIcons;
     Sprite cursor;
     Sprite highScoresButton;

@@ -17,10 +17,8 @@ public:
     LevelManager();
     ~LevelManager();
 
-    // Carga los niveles desde un archivo de texto
     void loadLevelsFromFile(const string& filename);
 
-    // Control general
     Level* getCurrentLevel();
     bool hasNextLevel() const;
     void nextLevel();

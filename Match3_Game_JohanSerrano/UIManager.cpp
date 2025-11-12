@@ -16,7 +16,6 @@ void UIManager::update(int currentScore, int remainingMoves, int currentLevel, O
 }
 
 void UIManager::draw(RenderWindow& window) {
-    // === HUD SUPERIOR ===
     Text scoreText("Score: " + to_string(score), *font, 40);
     scoreText.setPosition(headerPosScore);
     scoreText.setFillColor(Color::White);
@@ -38,7 +37,6 @@ void UIManager::draw(RenderWindow& window) {
     levelText.setOutlineThickness(2);
     window.draw(levelText);
 
-    // === PANEL DE OBJETIVO ===
     if (!objective) return;
 
     RectangleShape panel(Vector2f(310, 60));
@@ -77,7 +75,6 @@ void UIManager::draw(RenderWindow& window) {
     objText.setOutlineThickness(2);
     window.draw(objText);
 
-    // === GEM TARGET ===
     if (objective->getType() == ObjectiveType::CollectGems) {
         int gemKind = objective->getGemKind();
 
@@ -102,7 +99,6 @@ void UIManager::draw(RenderWindow& window) {
         window.draw(gemSprite);
     }
 
-    // === PROGRESS BAR ===
     RectangleShape progressBg(Vector2f(150, 10));
     progressBg.setPosition(progressBarPos);
     progressBg.setFillColor(Color(50, 50, 50));
@@ -117,18 +113,15 @@ void UIManager::draw(RenderWindow& window) {
 
 void UIManager::drawHighScores(RenderWindow& window, const Font& font,
     const vector<pair<string, int>>& highscores) {
-    // Fondo (la imagen bonita del potrero)
     const Texture& bgTex = ResourceManager::instance().getTexture("../assets/highScoresBackGround.png");
     Sprite background(bgTex);
     window.draw(background);
 
-    // Panel translúcido
     RectangleShape panel(Vector2f(600.f, 350.f));
-    panel.setFillColor(Color(255, 255, 255, 140)); // blanco translúcido
+    panel.setFillColor(Color(255, 255, 255, 140));
     panel.setPosition(100.f, 130.f);
     window.draw(panel);
 
-    // Título centrado
     Text title("HALL OF FAME", font, 38);
     title.setFillColor(Color::Black);
     title.setStyle(Text::Bold);
@@ -137,7 +130,6 @@ void UIManager::drawHighScores(RenderWindow& window, const Font& font,
     title.setPosition(400.f, 165.f);
     window.draw(title);
 
-    // Encabezados
     Text hPlayer("PLAYER", font, 26);
     Text hScore("SCORE", font, 26);
     hPlayer.setFillColor(Color::Black);
@@ -147,7 +139,6 @@ void UIManager::drawHighScores(RenderWindow& window, const Font& font,
     window.draw(hPlayer);
     window.draw(hScore);
 
-    // Filas (Top 5)
     float startY = 275.f;
     int count = std::min(5, (int)highscores.size());
     for (int i = 0; i < count; ++i) {
@@ -167,34 +158,32 @@ void UIManager::drawHighScores(RenderWindow& window, const Font& font,
 }
 
 void UIManager::drawGameWon(RenderWindow& window, const Font& font, const Player& player) {
-    static float alpha = 0.f; // para efecto de entrada
+    static float alpha = 0.f;
     if (alpha < 255.f) alpha += 3.f;
 
-    // Fondo: bandera con colores animados (transparencia creciente)
     RectangleShape stripe(Vector2f(800.f, 100.f));
-    stripe.setFillColor(Color(0, 0, 128, (Uint8)alpha)); // Azul
+    stripe.setFillColor(Color(0, 0, 128, (Uint8)alpha));
     stripe.setPosition(0.f, 0.f);
     window.draw(stripe);
 
-    stripe.setFillColor(Color(255, 255, 255, (Uint8)alpha)); // Blanco
+    stripe.setFillColor(Color(255, 255, 255, (Uint8)alpha));
     stripe.setPosition(0.f, 100.f);
     window.draw(stripe);
 
-    stripe.setFillColor(Color(200, 0, 0, (Uint8)alpha)); // Rojo
+    stripe.setFillColor(Color(200, 0, 0, (Uint8)alpha));
     stripe.setPosition(0.f, 200.f);
     window.draw(stripe);
     stripe.setPosition(0.f, 300.f);
     window.draw(stripe);
 
-    stripe.setFillColor(Color(255, 255, 255, (Uint8)alpha)); // Blanco
+    stripe.setFillColor(Color(255, 255, 255, (Uint8)alpha));
     stripe.setPosition(0.f, 400.f);
     window.draw(stripe);
 
-    stripe.setFillColor(Color(0, 0, 128, (Uint8)alpha)); // Azul
+    stripe.setFillColor(Color(0, 0, 128, (Uint8)alpha));
     stripe.setPosition(0.f, 500.f);
     window.draw(stripe);
 
-    // --- Título ---
     std::string name = player.getName();
     for (auto& c : name)
         c = static_cast<char>(toupper(static_cast<unsigned char>(c)));
@@ -208,7 +197,6 @@ void UIManager::drawGameWon(RenderWindow& window, const Font& font, const Player
     title.setPosition(400.f, 160.f);
     window.draw(title);
 
-    // --- Subtítulo ---
     Text subtitle("Has completado todos los niveles!", font, 40);
     subtitle.setFillColor(Color::White);
     subtitle.setOutlineColor(Color::Black);
@@ -218,7 +206,6 @@ void UIManager::drawGameWon(RenderWindow& window, const Font& font, const Player
     subtitle.setPosition(400.f, 250.f);
     window.draw(subtitle);
 
-    // --- Puntaje total ---
     Text scoreText("Puntaje total: " + std::to_string(player.getScore()), font, 40);
     scoreText.setFillColor(Color::White);
     scoreText.setOutlineColor(Color::Black);
@@ -228,7 +215,6 @@ void UIManager::drawGameWon(RenderWindow& window, const Font& font, const Player
     scoreText.setPosition(400.f, 320.f);
     window.draw(scoreText);
 
-    // --- Instrucciones ---
     Text instr("Presiona R para reiniciar o ESC salir", font, 30);
     instr.setFillColor(Color::White);
     instr.setOutlineColor(Color::Black);
@@ -238,7 +224,6 @@ void UIManager::drawGameWon(RenderWindow& window, const Font& font, const Player
     instr.setPosition(400.f, 520.f);
     window.draw(instr);
 
-    // --- Créditos ---
     Text credits("Desarrollado por Johan Serrano Víctor", font, 30);
     credits.setFillColor(Color::White);
     credits.setOutlineColor(Color::Black);

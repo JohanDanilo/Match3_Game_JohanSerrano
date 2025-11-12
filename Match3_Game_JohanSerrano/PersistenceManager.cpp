@@ -25,7 +25,6 @@ void PersistenceManager::saveProgress(const Player& player) {
         std::string safeName = toUpper(player.getName());
         std::string filename = SAVE_DIR + safeName + ".txt";
 
-        // Cargar progreso previo (si existe)
         int oldLevel = 0, oldScore = 0;
         {
             std::ifstream in(filename);
@@ -39,7 +38,6 @@ void PersistenceManager::saveProgress(const Player& player) {
         int bestLevel = std::max(oldLevel, player.getLevel());
         int bestScore = std::max(oldScore, player.getScore());
 
-        // Guardar nuevo progreso
         std::ofstream out(filename, std::ios::trunc);
         if (!out.is_open()) {
             throw std::runtime_error("[ERROR] No se pudo abrir " + filename + " para guardar progreso.");
@@ -48,7 +46,6 @@ void PersistenceManager::saveProgress(const Player& player) {
         out << safeName << " " << bestLevel << " " << bestScore << "\n";
         out.close();
 
-        // Actualizar highscores
         PersistenceManager::updateHighScores(safeName, bestScore);
 
         std::cout << "[SAVE] Progreso guardado para " << safeName
@@ -111,7 +108,6 @@ vector<pair<string, int>> PersistenceManager::loadRanking() {
 void PersistenceManager::loadHighScores(std::vector<std::pair<std::string, int>>& outScores) {
     outScores.clear();
 
-    // Si hay highscores.txt úsalo
     std::ifstream file("saves/highscores.txt");
     if (file.is_open()) {
         std::string name; int score;
@@ -127,9 +123,8 @@ void PersistenceManager::loadHighScores(std::vector<std::pair<std::string, int>>
         return;
     }
 
-    // Si NO existe highscores.txt, derivarlo del progreso por-jugador (sin “Player1 0”)
     std::cerr << "[WARN] No se encontró highscores.txt. Construyendo desde saves/*.txt...\n";
-    auto ranking = PersistenceManager::loadRanking();   // lee todos los jugadores y sus scores
+    auto ranking = PersistenceManager::loadRanking();
     if (ranking.size() > 5) ranking.resize(5);
     outScores = ranking;
 
@@ -145,7 +140,6 @@ void PersistenceManager::loadHighScores(std::vector<std::pair<std::string, int>>
 void PersistenceManager::updateHighScores(const std::string& playerName, int newScore) {
     Player tmp(playerName);
     tmp.setScore(newScore);
-    // tmp.setLevel(bestLevel);
     PersistenceManager::updateHighScores(tmp);
 }
 
@@ -153,7 +147,6 @@ void PersistenceManager::updateHighScores(const Player& player) {
     try {
         std::vector<std::pair<std::string, int>> highscores;
 
-        // Leer archivo actual (si existe)
         std::ifstream file("saves/highscores.txt");
         if (file.is_open()) {
             std::string name; int score;
@@ -219,7 +212,7 @@ std::vector<Player> PersistenceManager::loadRankingPlayers() {
                     Player p(name);
                     p.setLevel(level);
                     p.setScore(score);
-                    p.updateState(totalLevels); // A futuro levelManager.getTotalLevels()
+                    p.updateState(totalLevels);
                     ranking.push_back(p);
                 }
             }

@@ -4,10 +4,8 @@
 #include <iostream>
 using namespace std;
 
-/* ===================== CONSTRUCTOR / DESTRUCTOR ===================== */
 
 LevelManager::LevelManager() : currentLevelIndex(0) {
-    // Carga automática desde archivo de texto
     loadLevelsFromFile("../assets/data/levels.txt");
 }
 
@@ -18,7 +16,6 @@ LevelManager::~LevelManager() {
     levels.clear();
 }
 
-/* ===================== CARGA DE NIVELES DESDE ARCHIVO ===================== */
 
 void LevelManager::loadLevelsFromFile(const string& filename) {
     ifstream file(filename);
@@ -33,7 +30,7 @@ void LevelManager::loadLevelsFromFile(const string& filename) {
 
     while (getline(file, line)) {
         lineNumber++;
-        if (line.empty() || line[0] == '#') continue; // Ignora comentarios o líneas vacías
+        if (line.empty() || line[0] == '#') continue;
 
         stringstream ss(line);
         int number, typeInt, target, gemKind, moves, obstacles;
@@ -53,7 +50,6 @@ void LevelManager::loadLevelsFromFile(const string& filename) {
     cout << "[INFO] Se cargaron " << levels.size() << " niveles desde archivo '" << filename << "'.\n";
 }
 
-/* ===================== CREACIÓN DE NIVEL ===================== */
 
 void LevelManager::createLevelGeneric(int number, ObjectiveType type, int target, int gemKind, int moves, int obstacles) {
     Objective* obj = new Objective(type, target, gemKind);
@@ -62,7 +58,6 @@ void LevelManager::createLevelGeneric(int number, ObjectiveType type, int target
     levels.push_back(lvl);
 }
 
-/* ===================== CONTROL DE NIVELES ===================== */
 
 Level* LevelManager::getCurrentLevel() {
     if (currentLevelIndex < levels.size()) {
@@ -109,7 +104,7 @@ void LevelManager::setCurrentLevelIndex(int index) {
         currentLevelIndex = index;
     }
     else {
-        currentLevelIndex = 0; // seguridad por si se pasa de rango
+        currentLevelIndex = 0;
     }
 }
 

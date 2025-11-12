@@ -6,7 +6,6 @@ UXManager::UXManager(const Font* f, UIManager* ui)
 {
     cout << "[DEBUG] UXManager inicializado." << endl;
 
-    // Inicializar correctamente la ventana
     if (!window.isOpen()) {
         window.create(VideoMode(800, 600), "Costa Rican Enchanted Gems", Style::Default);
         window.setFramerateLimit(144);
@@ -24,7 +23,6 @@ UXManager::~UXManager() {
     }
 }
 
-/* ===================== GESTIÓN DE VENTANA ===================== */
 
 RenderWindow& UXManager::getWindow() { return window; }
 bool UXManager::isOpen() const { return window.isOpen(); }
@@ -36,7 +34,6 @@ void UXManager::display() {
     window.display();
 }
 
-/* ===================== ESCENAS ===================== */
 
 void UXManager::setScene(SceneType scene) {
     currentScene = scene;
@@ -70,7 +67,6 @@ void UXManager::drawBackground(const string& textureName) {
     }
 }
 
-/* ===================== EFECTOS VISUALES ===================== */
 
 void UXManager::startFade(Color color, float duration, bool fadeInEffect) {
     fadeColor = color;
@@ -104,49 +100,37 @@ void UXManager::drawFade() {
     if (fadeActive) window.draw(fadeRect);
 }
 
-/* ===================== EVENTOS GLOBALES ===================== */
 bool UXManager::pollGlobalEvent(Event& e) {
     return window.pollEvent(e);
 }
 
-/* ===================== EXPERIENCIA DE JUEGO ===================== */
 
-// Traducir eventos del mouse/teclado hacia acciones del Board
-// UXManager.cpp
 void UXManager::handleBoardEvents(Board& board, Event& e) {
-    // Solo procesar clics del tipo presionado (sin importar el botón)
     if (e.type != Event::MouseButtonPressed) return;
 
     Vector2i mousePos = Mouse::getPosition(window);
     float x = mousePos.x - offset.x;
     float y = mousePos.y - offset.y;
 
-    // 1? Validar límites del área del tablero
     if (x < 0 || y < 0 || x >= TILE_SIZE * COLS || y >= TILE_SIZE * ROWS) {
-        return; // clic fuera del tablero ? ignorar
+        return;
     }
 
     int col = static_cast<int>(x / TILE_SIZE);
     int row = static_cast<int>(y / TILE_SIZE);
 
-    // 2? Validar estado del tablero
-    if (board.getState() != 0) return; // solo cuando está Idle
+    if (board.getState() != 0) return;
 
     
 
-    // 4? Si todo está bien, manejar el clic
     board.handleGemClick(row, col);
 }
 
 
-
-
-// Dibuja el tablero (solo visual)
 void UXManager::drawBoard(Board& board) {
     board.draw(window);
 }
 
-// Dibuja el HUD/UI (marcadores, metas, etc.)
 void UXManager::drawGameUI(UIManager& ui) {
     ui.draw(window);
 }

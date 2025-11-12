@@ -12,8 +12,6 @@ const int GEM_WIDTH = 47;
 const int GEM_HEIGHT = 54;
 const Vector2f offset(171, 70);
 
-class Board; // evita includes circulares
-
 class Gem {
 protected:
 
@@ -36,14 +34,8 @@ public:
     Sprite& getSprite();
 
     virtual void draw(RenderWindow& window) = 0;
-
-    // NOTE: Remove dead Code
-    //virtual void onMatch(Board& board, int row, int col);
     
     virtual string getType() const = 0;
-    
-    // NOTE: Remove dead Code
-    //virtual Gem* clone() const;
 
     void setKind(int aType);
     void setGridPositions(int aRow, int aColum);

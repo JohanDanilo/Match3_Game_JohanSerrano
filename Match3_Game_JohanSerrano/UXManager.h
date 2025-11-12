@@ -40,27 +40,22 @@ public:
     UXManager(const Font* f, UIManager* ui);
     ~UXManager();
 
-    // --- Gestión de ventana ---
     RenderWindow& getWindow();
     bool isOpen() const;
     void close();
     void clear(const Color& color = Color::Black);
     void display();
 
-    // --- Escenas ---
     void setScene(SceneType scene);
     SceneType getScene() const;
     void drawBackground(const string& textureName);
 
-    // --- Efectos visuales ---
     void startFade(Color color, float duration, bool fadeInEffect);
     void updateFade();
     void drawFade();
 
-    // --- Eventos globales ---
     bool pollGlobalEvent(Event& e);
 
-    // --- NUEVO: Experiencia de juego ---
     void handleBoardEvents(Board& board, Event& e);
     void drawBoard(Board& board);
     void drawGameUI(UIManager& ui);

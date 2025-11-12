@@ -2,9 +2,8 @@
 
 const Texture& ResourceManager::getTexture(const string& filename) {
     if (textures.find(filename) == textures.end()) {
-        // Cargar directamente en el mapa, sin move()
         if (!textures[filename].loadFromFile(filename)) {
-            textures.erase(filename); // Limpiar entrada fallida
+            textures.erase(filename);
             throw runtime_error("Error cargando textura: " + filename);
         }
         textures[filename].setSmooth(true);

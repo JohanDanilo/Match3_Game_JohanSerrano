@@ -20,7 +20,6 @@ Board::~Board() {
     clearObstacles();
 }
 
-/* ===================== INICIALIZACIÓN ===================== */
 
 void Board::initialize() {
     for (int r = 0; r < ROWS; r++) {
@@ -69,7 +68,6 @@ void Board::initialize() {
     firstRow = firstCol = secondRow = secondCol = -1;
 }
 
-/* ===================== DIBUJO ===================== */
 
 void Board::draw(RenderWindow& window) {
     for (int row = 0; row < ROWS; row++) {
@@ -87,7 +85,6 @@ void Board::draw(RenderWindow& window) {
     }
 }
 
-/* ===================== ESTADOS ===================== */
 
 void Board::update(float deltaTime, int& scoreGained, bool& moveConsumed) {
     scoreGained = 0;
@@ -206,7 +203,6 @@ void Board::handleScoringState(float deltaTime, int& scoreGained, bool& moveCons
         applyGravity();
         refill();
         state = Moving;
-        // seguimos con inputLocked = true
     }
 }
 
@@ -239,7 +235,6 @@ void Board::handleMovingState(float deltaTime) {
     }
 }
 
-/* ===================== LÓGICA DE MATCHES ===================== */
 
 bool Board::areAdjacent(int row1, int col1, int row2, int col2) const {
     if (row1 == row2 && col1 == col2) return false;
@@ -274,7 +269,7 @@ bool Board::trySwapIndices(int row1, int col1, int row2, int col2) {
 
     state = Swapping;
     playerInitiatedMove = true;
-    inputLocked = true; // 🔒 bloquea input durante animación
+    inputLocked = true;
     cout << "[LOCK] Input bloqueado (Swapping activo).\n";
     return true;
 }
@@ -383,7 +378,6 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
     int destRow = -1;
     int destCol = -1;
 
-    // Detectar si hay gemas especiales
     bool containsSpecial = false;
     for (int k = 0; k < count; k++) {
         int r = horizontal ? outer : lastIndex - k;
@@ -395,7 +389,6 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
         }
     }
 
-    // Calcular posición de gema especial
     if (count >= 4 && !containsSpecial) {
         auto inSequence = [&](int r, int c) -> bool {
             if (horizontal) {
@@ -433,7 +426,6 @@ void Board::markMatches(bool horizontal, int outer, int lastIndex, int count) {
         }
     }
 
-    // Marcar gemas para eliminar
     for (int k = 0; k < count; ++k) {
         int r = horizontal ? outer : lastIndex - k;
         int c = horizontal ? lastIndex - k : outer;
@@ -488,7 +480,6 @@ int Board::clearMatches() {
     return score;
 }
 
-/* ===================== OBJETIVOS Y OBSTÁCULOS ===================== */
 
 void Board::updateObjectivesOnMatch(int row, int col) {
     if (!currentLevel) {
@@ -589,7 +580,6 @@ void Board::activateIceEffect(int row) {
     }
 }
 
-/* ===================== FÍSICA Y REFILL ===================== */
 
 void Board::applyGravity() {
     for (int c = 0; c < COLS; ++c) {
@@ -709,8 +699,6 @@ void Board::spawnSpecialGem(int row, int col, bool horizontal) {
     }
 }
 
-/* ===================== OBSTÁCULOS ===================== */
-
 void Board::placeObstacles(int count) {
     clearObstacles();
 
@@ -758,7 +746,6 @@ bool Board::hasObstacleAt(int row, int col) const {
     return false;
 }
 
-/* ===================== NIVEL ===================== */
 
 void Board::setCurrentLevel(Level* level) {
     currentLevel = level;
@@ -774,7 +761,6 @@ void Board::clearCurrentLevel() {
     obstacles.clear();
 }
 
-/* ===================== UTILIDADES ===================== */
 
 int Board::getState() const {
     return static_cast<int>(state);
@@ -784,7 +770,6 @@ Gem* Board::getGem(int row, int col) {
     return grid[row][col];
 }
 
-/* ===================== INPUT ===================== */
 
 void Board::handleGemClick(int row, int col) {
     if (inputLocked || state != Idle) {

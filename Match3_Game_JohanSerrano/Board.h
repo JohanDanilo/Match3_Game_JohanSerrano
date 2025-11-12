@@ -35,7 +35,6 @@ private:
 
     bool inputLocked = false;
 
-    // Selección / swap
     Gem* firstGem = nullptr;
     Gem* secondGem = nullptr;
     int firstRow = -1, firstCol = -1;
@@ -43,7 +42,6 @@ private:
     Vector2f swapOrigPos1, swapOrigPos2;
     bool playerInitiatedMove = false;
 
-    // Métodos privados
     void revertSwap();
     void findMatches();
     void checkLineMatches(bool horizontal);
@@ -61,44 +59,36 @@ public:
     Board();
     ~Board();
 
-    // Ciclo principal
     void initialize();
     void draw(RenderWindow& window);
     void update(float deltaTime, int& scoreGained, bool& moveConsumed);
 
-    // Estados del juego
     void handleIdleState();
     void handleSwappingState(float deltaTime, bool& moveConsumed);
     void handleRevertingState(float deltaTime);
     void handleScoringState(float deltaTime, int& scoreGained, bool& moveConsumed);
     void handleMovingState(float deltaTime);
 
-    // Lógica de matches
     bool trySwapIndices(int row1, int col1, int row2, int col2);
     bool areAdjacent(int row1, int col1, int row2, int col2) const;
     bool createsMatch(int row, int col, int kind);
     bool checkAnyMatch();
     void triggerDisappearance();
 
-    // Efectos especiales
     void activateSpecialGemsInMatches();
     void activateBombEffect(int row, int col);
     void activateIceEffect(int row);
 
-    // Nivel y objetivos
     void setCurrentLevel(Level* level);
     void updateScoreObjective(int scoreGained);
     void clearCurrentLevel();
 
-    // Obstáculos
     void placeObstacles(int count);
     void clearObstacles();
 
-    // Utilidades
     int getState() const;
     Gem* getGem(int row, int col);
 
-    // Input del jugador
     void handleGemClick(int row, int col);
 
 };
