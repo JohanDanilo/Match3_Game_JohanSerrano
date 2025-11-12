@@ -454,3 +454,9 @@ x64/**/Logs/
 x64/**/assets/
 x64/**/Intermediate/
 x64/**/Release/
+
+# ======================================
+# Evitar subir archivos de progreso generados en tiempo de ejecución
+# ======================================
+x64/**/saves/*.txt
+!x64/**/saves/.gitkeep
