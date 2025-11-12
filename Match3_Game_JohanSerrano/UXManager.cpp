@@ -42,11 +42,13 @@ void UXManager::setScene(SceneType scene) {
     currentScene = scene;
     cout << "[DEBUG] Escena cambiada a: ";
     switch (scene) {
-    case SceneType::MainMenu: cout << "MainMenu"; break;
-    case SceneType::LevelMap: cout << "LevelMap"; break;
-    case SceneType::Gameplay: cout << "Gameplay"; break;
+    case SceneType::MainMenu:      cout << "MainMenu"; break;
+    case SceneType::LevelMap:      cout << "LevelMap"; break;
+    case SceneType::Gameplay:      cout << "Gameplay"; break;
     case SceneType::LevelComplete: cout << "LevelComplete"; break;
-    case SceneType::GameOver: cout << "GameOver"; break;
+    case SceneType::GameOver:      cout << "GameOver"; break;
+    case SceneType::HighScores:    cout << "HighScores"; break;
+    case SceneType::GameWon:       cout << "GameWon"; break;
     }
     cout << endl;
 }
@@ -135,6 +137,7 @@ void UXManager::handleBoardEvents(Board& board, Event& e) {
     // 4? Si todo está bien, manejar el clic
     board.handleGemClick(row, col);
 }
+
 
 
 

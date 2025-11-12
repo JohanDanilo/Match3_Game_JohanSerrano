@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "Objective.h"
 #include "ResourceManager.h"
+#include "Player.h"
 
 using namespace sf;
 using namespace std;
@@ -36,4 +37,8 @@ public:
     UIManager(const Font* f, const Texture& t);
     void update(int currentScore, int remainingMoves, int currentLevel, Objective* obj);
     void draw(RenderWindow& window);
+    void drawHighScores(sf::RenderWindow& window, const sf::Font& font,
+        const std::vector<std::pair<std::string, int>>& highscores);
+
+    void drawGameWon(sf::RenderWindow& window, const sf::Font& font, const Player& player);
 };

@@ -20,6 +20,7 @@ enum class GameState {
     LevelComplete,
     GameOver,
     HighScores,
+    GameWon,
     Exit
 };
 
@@ -43,7 +44,7 @@ private:
     bool running = true;
     GameState state = GameState::MainMenu;
 
-    int score = 0;               // puntaje del nivel actual
+    int score = 0;
     int moves = 20;
     int currentLevelIndex = 0;
 
@@ -57,13 +58,8 @@ private:
     Sprite exitButton;
     bool levelMapUIInitialized = false;
 
-public:
-    Game();
-    ~Game();
+    std::vector<std::pair<std::string, int>> highscoreCache;
 
-    void run();
-
-private:
     void init();
     void runMainMenu();
     void runLevelMap();
@@ -71,10 +67,17 @@ private:
     void runGameLoop();
     void runLevelComplete();
     void runGameOver();
+    void runGameWon();
 
     void startLevel();
-    void drawCurrentScene();
 
     void initLevelMapUI();
     void syncLevelIconsByProgress();
+    void drawCurrentScene();
+
+public:
+    Game();
+    ~Game();
+
+    void run();
 };

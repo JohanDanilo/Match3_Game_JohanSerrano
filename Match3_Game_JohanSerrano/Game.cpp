@@ -46,6 +46,7 @@ void Game::run() {
         case GameState::LevelComplete: runLevelComplete(); break;
         case GameState::GameOver:      runGameOver(); break;
         case GameState::HighScores:    runHighScores(); break;
+		case GameState::GameWon:       runGameWon(); break;
         case GameState::Exit:          running = false; break;
         }
     }
@@ -56,19 +57,38 @@ void Game::runMainMenu() {
     ux->setScene(SceneType::MainMenu);
     auto& window = ux->getWindow();
 
-    bool enteringName = currentPlayer.getName().empty();
+    // Siempre inicia mostrando solo el menú
+    bool enteringName = false;
     std::string tempName = "";
 
-    Text namePrompt("Enter your name:", font, 40);
-    namePrompt.setFillColor(Color::White);
-    namePrompt.setPosition(200, 200);
-
-    Text nameInput("", font, 40);
-    nameInput.setFillColor(Color::White);
-    nameInput.setPosition(200, 260);
-
+    // --- Overlay oscuro cuando se ingresa el nombre ---
     RectangleShape overlay(Vector2f(800.f, 600.f));
-    overlay.setFillColor(Color(0, 255, 255, 100));
+    overlay.setFillColor(Color(0, 0, 0, 150)); // Negro translúcido
+
+    // --- Texto “Enter your name” ---
+    Text namePrompt("ENTER YOUR NAME:", font, 50);
+    namePrompt.setFillColor(Color::White);
+    namePrompt.setOutlineColor(Color::Black);
+    namePrompt.setOutlineThickness(4);
+    FloatRect npb = namePrompt.getLocalBounds();
+    namePrompt.setOrigin(npb.width / 2.f, npb.height / 2.f);
+    namePrompt.setPosition(400.f, 220.f);
+
+    // --- Campo donde se escribe el nombre ---
+    Text nameInput("", font, 50);
+    nameInput.setFillColor(Color::White);
+    nameInput.setOutlineColor(Color::Black);
+    nameInput.setOutlineThickness(4);
+    nameInput.setPosition(260.f, 290.f);
+
+    // --- Texto inferior de ayuda ---
+    Text tip("Press ENTER to continue", font, 35);
+    tip.setFillColor(Color::White);
+    tip.setOutlineColor(Color::Black);
+    tip.setOutlineThickness(2);
+    FloatRect tp = tip.getLocalBounds();
+    tip.setOrigin(tp.width / 2.f, tp.height / 2.f);
+    tip.setPosition(400.f, 500.f);
 
     while (ux->isOpen() && state == GameState::MainMenu) {
         Event event;
@@ -79,7 +99,7 @@ void Game::runMainMenu() {
                 return;
             }
 
-            // --- Ingreso de nombre ---
+            // --- Solo si está ingresando nombre ---
             if (enteringName && event.type == Event::TextEntered) {
                 if (event.text.unicode == '\b' && !tempName.empty()) {
                     tempName.pop_back();
@@ -88,6 +108,7 @@ void Game::runMainMenu() {
                     currentPlayer = Player(tempName);
                     cout << "[INFO] Nombre ingresado: " << currentPlayer.getName() << endl;
 
+                    // Cargar o crear progreso
                     if (!PersistenceManager::loadProgress(currentPlayer)) {
                         PersistenceManager::saveProgress(currentPlayer);
                     }
@@ -105,15 +126,17 @@ void Game::runMainMenu() {
                 }
             }
 
-            // --- Botones del menú (si ya ingresó nombre) ---
+            // --- Botones del menú principal ---
             if (!enteringName && event.type == Event::MouseButtonPressed) {
                 Vector2i mousePos = Mouse::getPosition(window);
 
+                // Botón PLAY (posición de tu imagen)
                 if (IntRect(321, 547, 160, 48).contains(mousePos)) {
-                    state = GameState::LevelMap;
-                    return;
+                    enteringName = true; // recién aquí se activa la captura de nombre
+                    tempName.clear();
                 }
 
+                // Botón EXIT
                 if (IntRect(706, 45, 70, 32).contains(mousePos)) {
                     ux->close();
                     running = false;
@@ -122,6 +145,7 @@ void Game::runMainMenu() {
             }
         }
 
+        // --- Renderizado ---
         ux->clear();
         ux->drawBackground("assets/mainMenu.png");
 
@@ -130,11 +154,13 @@ void Game::runMainMenu() {
             window.draw(namePrompt);
             nameInput.setString(tempName + "_");
             window.draw(nameInput);
+            window.draw(tip);
         }
 
         ux->display();
     }
 }
+
 
 /* ===================== LEVEL MAP ===================== */
 void Game::runLevelMap() {
@@ -396,18 +422,30 @@ void Game::runLevelComplete() {
             }
 
             if (event.type == Event::MouseButtonPressed) {
-                if (levelManager.hasNextLevel()) levelManager.nextLevel();
-                else levelManager.reset();
 
-                currentPlayer.setLevel(levelManager.getCurrentLevelNumber());
-                currentPlayer.setScore(currentPlayer.getScore() + score);
-                currentPlayer.updateState(levelManager.getTotalLevels());
+                // Si hay más niveles, pasa al siguiente
+                if (levelManager.hasNextLevel()) {
+                    levelManager.nextLevel();
 
-                PersistenceManager::saveProgress(currentPlayer);
+                    currentPlayer.setLevel(levelManager.getCurrentLevelNumber());
+                    currentPlayer.setScore(currentPlayer.getScore() + score);
+                    currentPlayer.updateState(levelManager.getTotalLevels());
 
-                syncLevelIconsByProgress();
-                activeLevel = levelManager.getCurrentLevel();
-                state = GameState::LevelMap;
+                    PersistenceManager::saveProgress(currentPlayer);
+                    syncLevelIconsByProgress();
+                    activeLevel = levelManager.getCurrentLevel();
+                    state = GameState::LevelMap;
+                }
+                else {
+                    // Si ya era el último nivel, mostrar pantalla de victoria
+                    currentPlayer.setScore(currentPlayer.getScore() + score);
+                    currentPlayer.updateState(levelManager.getTotalLevels());
+                    PersistenceManager::saveProgress(currentPlayer);
+
+                    cout << "[INFO] ¡Todos los niveles completados! Mostrando pantalla de victoria..." << endl;
+                    state = GameState::GameWon;
+                }
+
                 return;
             }
         }
@@ -434,6 +472,7 @@ void Game::runLevelComplete() {
         ux->display();
     }
 }
+
 
 /* ===================== GAME OVER ===================== */
 void Game::runGameOver() {
@@ -491,6 +530,41 @@ void Game::runGameOver() {
         ux->display();
     }
 }
+
+void Game::runGameWon() {
+    ux->setScene(SceneType::GameWon);
+    auto& window = ux->getWindow();
+
+    while (ux->isOpen() && state == GameState::GameWon) {
+        Event e;
+        while (ux->pollGlobalEvent(e)) {
+            if (e.type == Event::Closed) {
+                ux->close();
+                running = false;
+                return;
+            }
+            if (e.type == Event::KeyPressed) {
+                if (e.key.code == Keyboard::R) {
+                    levelManager.reset();
+                    currentPlayer.setLevel(1);
+                    PersistenceManager::saveProgress(currentPlayer);
+                    syncLevelIconsByProgress();
+                    state = GameState::LevelMap;
+                    return;
+                }
+                if (e.key.code == Keyboard::Escape) {
+                    ux->close();
+                    running = false;
+                    return;
+                }
+            }
+        }
+
+        // Render centralizado (UIManager dibuja la escena)
+        drawCurrentScene();
+    }
+}
+
 
 /* ===================== LEVEL MAP UI ===================== */
 void Game::initLevelMapUI() {
@@ -555,3 +629,34 @@ void Game::syncLevelIconsByProgress() {
             levelIcons[i].unlocked = true;
     }
 }
+
+
+void Game::drawCurrentScene() {
+    auto& window = ux->getWindow();
+    ux->clear();
+
+    switch (state) {
+    case GameState::Playing: {
+        ux->drawBackground("assets/background.png");
+        ux->drawBoard(board);
+        ux->drawGameUI(*uiManager);
+        break;
+    }
+    case GameState::HighScores: {
+        // UIManager dibuja TODO el contenido de la escena
+        uiManager->drawHighScores(window, font, highscoreCache);
+        break;
+    }
+    case GameState::GameWon: {
+        uiManager->drawGameWon(window, font, currentPlayer);
+        break;
+    }
+    default:
+        // otras escenas siguen con su propio render existente
+        break;
+    }
+
+    ux->drawFade();
+    ux->display();
+}
+

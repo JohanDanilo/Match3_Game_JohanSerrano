@@ -1,5 +1,9 @@
 #include "UIManager.h"
+
 using namespace sf;
+using std::string;
+using std::pair;
+using std::vector;
 using namespace std;
 
 UIManager::UIManager(const Font* f, const Texture& t) : font(f), gemTexture(t) {}
@@ -109,4 +113,138 @@ void UIManager::draw(RenderWindow& window) {
     progressBar.setPosition(progressBarPos);
     progressBar.setFillColor(objective->isCompleted() ? Color::Green : Color::Cyan);
     window.draw(progressBar);
+}
+
+void UIManager::drawHighScores(RenderWindow& window, const Font& font,
+    const vector<pair<string, int>>& highscores) {
+    // Fondo (la imagen bonita del potrero)
+    const Texture& bgTex = ResourceManager::instance().getTexture("assets/highScoresBackGround.png");
+    Sprite background(bgTex);
+    window.draw(background);
+
+    // Panel translúcido
+    RectangleShape panel(Vector2f(600.f, 350.f));
+    panel.setFillColor(Color(255, 255, 255, 140)); // blanco translúcido
+    panel.setPosition(100.f, 130.f);
+    window.draw(panel);
+
+    // Título centrado
+    Text title("HALL OF FAME", font, 38);
+    title.setFillColor(Color::Black);
+    title.setStyle(Text::Bold);
+    FloatRect tb = title.getLocalBounds();
+    title.setOrigin(tb.width / 2.f, tb.height / 2.f);
+    title.setPosition(400.f, 165.f);
+    window.draw(title);
+
+    // Encabezados
+    Text hPlayer("PLAYER", font, 26);
+    Text hScore("SCORE", font, 26);
+    hPlayer.setFillColor(Color::Black);
+    hScore.setFillColor(Color::Black);
+    hPlayer.setPosition(160.f, 230.f);
+    hScore.setPosition(580.f, 230.f);
+    window.draw(hPlayer);
+    window.draw(hScore);
+
+    // Filas (Top 5)
+    float startY = 275.f;
+    int count = std::min(5, (int)highscores.size());
+    for (int i = 0; i < count; ++i) {
+        const string& name = highscores[i].first;
+        int score = highscores[i].second;
+
+        Text nameText(name, font, 24);
+        Text scoreText(std::to_string(score), font, 24);
+        nameText.setFillColor(Color::Black);
+        scoreText.setFillColor(Color::Black);
+        nameText.setPosition(160.f, startY + i * 45.f);
+        scoreText.setPosition(580.f, startY + i * 45.f);
+
+        window.draw(nameText);
+        window.draw(scoreText);
+    }
+}
+
+void UIManager::drawGameWon(RenderWindow& window, const Font& font, const Player& player) {
+    static float alpha = 0.f; // para efecto de entrada
+    if (alpha < 255.f) alpha += 3.f;
+
+    // Fondo: bandera con colores animados (transparencia creciente)
+    RectangleShape stripe(Vector2f(800.f, 100.f));
+    stripe.setFillColor(Color(0, 0, 128, (Uint8)alpha)); // Azul
+    stripe.setPosition(0.f, 0.f);
+    window.draw(stripe);
+
+    stripe.setFillColor(Color(255, 255, 255, (Uint8)alpha)); // Blanco
+    stripe.setPosition(0.f, 100.f);
+    window.draw(stripe);
+
+    stripe.setFillColor(Color(200, 0, 0, (Uint8)alpha)); // Rojo
+    stripe.setPosition(0.f, 200.f);
+    window.draw(stripe);
+    stripe.setPosition(0.f, 300.f);
+    window.draw(stripe);
+
+    stripe.setFillColor(Color(255, 255, 255, (Uint8)alpha)); // Blanco
+    stripe.setPosition(0.f, 400.f);
+    window.draw(stripe);
+
+    stripe.setFillColor(Color(0, 0, 128, (Uint8)alpha)); // Azul
+    stripe.setPosition(0.f, 500.f);
+    window.draw(stripe);
+
+    // --- Título ---
+    std::string name = player.getName();
+    for (auto& c : name)
+        c = static_cast<char>(toupper(static_cast<unsigned char>(c)));
+
+    Text title("FELICIDADES, " + name + "!", font, 50);
+    title.setFillColor(Color::White);
+    title.setOutlineColor(Color::Black);
+    title.setOutlineThickness(4);
+    FloatRect tb = title.getLocalBounds();
+    title.setOrigin(tb.width / 2.f, tb.height / 2.f);
+    title.setPosition(400.f, 160.f);
+    window.draw(title);
+
+    // --- Subtítulo ---
+    Text subtitle("Has completado todos los niveles!", font, 40);
+    subtitle.setFillColor(Color::White);
+    subtitle.setOutlineColor(Color::Black);
+    subtitle.setOutlineThickness(2);
+    FloatRect sb = subtitle.getLocalBounds();
+    subtitle.setOrigin(sb.width / 2.f, sb.height / 2.f);
+    subtitle.setPosition(400.f, 250.f);
+    window.draw(subtitle);
+
+    // --- Puntaje total ---
+    Text scoreText("Puntaje total: " + std::to_string(player.getScore()), font, 40);
+    scoreText.setFillColor(Color::White);
+    scoreText.setOutlineColor(Color::Black);
+    scoreText.setOutlineThickness(2);
+    FloatRect scb = scoreText.getLocalBounds();
+    scoreText.setOrigin(scb.width / 2.f, scb.height / 2.f);
+    scoreText.setPosition(400.f, 320.f);
+    window.draw(scoreText);
+
+    // --- Instrucciones ---
+    Text instr("Presiona R para reiniciar o ESC salir", font, 30);
+    instr.setFillColor(Color::White);
+    instr.setOutlineColor(Color::Black);
+    instr.setOutlineThickness(2);
+    FloatRect ib = instr.getLocalBounds();
+    instr.setOrigin(ib.width / 2.f, ib.height / 2.f);
+    instr.setPosition(400.f, 520.f);
+    window.draw(instr);
+
+    // --- Créditos ---
+    Text credits("Desarrollado por Johan Serrano Víctor", font, 30);
+    credits.setFillColor(Color::White);
+    credits.setOutlineColor(Color::Black);
+    credits.setOutlineThickness(2);
+    FloatRect cb = credits.getLocalBounds();
+    credits.setOrigin(cb.width / 2.f, cb.height / 2.f);
+    credits.setPosition(400.f, 570.f);
+    window.draw(credits);
 }

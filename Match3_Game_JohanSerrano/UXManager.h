@@ -5,6 +5,7 @@
 #include "ResourceManager.h"
 #include "UIManager.h"
 #include "Board.h"
+#include "Player.h"
 
 using namespace sf;
 using namespace std;
@@ -15,7 +16,8 @@ enum class SceneType {
     Gameplay,
     LevelComplete,
     GameOver,
-    HighScores
+    HighScores,
+	GameWon,
 };
 
 class UXManager {
@@ -34,6 +36,7 @@ private:
     bool fadeIn = true;
 
 public:
+
     UXManager(const Font* f, UIManager* ui);
     ~UXManager();
 
