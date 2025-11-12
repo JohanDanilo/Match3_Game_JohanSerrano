@@ -434,10 +434,13 @@ saves/*
 !/x64/Debug/
 !/x64/Release/
 
-# === 3️ Ignorar binarios, símbolos y librerías ===
+# === 3️ Ignorar binarios y símbolos, pero mantener DLLs necesarias ===
 x64/**/*.exe
 x64/**/*.pdb
-x64/**/*.dll
+
+# Mantener las DLLs esenciales de SFML y OpenAL
+!x64/**/sfml-*.dll
+!x64/**/openal32.dll
 
 # === 4️ Mantener las carpetas Debug y Release vacías (solo estructura) ===
 !x64/Debug/.gitkeep
@@ -456,6 +459,7 @@ x64/**/assets/
 x64/**/Intermediate/
 x64/**/Logs/
 
-# Ignorar archivos de progreso del jugador
-saves/*
-!saves/.gitkeep
+# === 8️ Protección adicional ===
+# Evita que copias automáticas de assets o saves vuelvan a colarse
+x64/**/assets/
+x64/**/saves/
