@@ -4,8 +4,8 @@ using namespace std;
 
 int main() {
     try {
-        Game game;      // init() se llama automáticamente dentro del constructor
-        game.run();     // arranca el bucle principal
+        Game game;
+        game.run();
     }
     catch (const exception& e) {
         cerr << "[FATAL ERROR] " << e.what() << endl;
