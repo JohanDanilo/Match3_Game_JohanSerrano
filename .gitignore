@@ -22,7 +22,10 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
-x64/
+# Mantener x64 si contiene dependencias de SFML
+!x64/
+x64/Debug/
+x64/Release/
 x86/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
@@ -425,3 +428,29 @@ FodyWeavers.xsd
 saves/*
 # Pero mantener la carpeta saves vacía
 !saves/.gitkeep
+
+# ======================================
+# Incluir carpeta x64 raíz (build ejecutable con SFML)
+# ======================================
+
+# No ignorar la carpeta x64 de la raíz
+!/x64/
+!/x64/Debug/
+!/x64/Release/
+
+# Mantener solo los archivos esenciales del ejecutable
+!/x64/Debug/assets/
+!/x64/Debug/saves/
+!/x64/Debug/*.dll
+!/x64/Debug/*.exe
+
+# Evitar incluir archivos intermedios y logs dentro de x64
+x64/**/Intermediate/
+x64/**/Logs/
+
+# ======================================
+# Evitar duplicación de assets dentro de builds
+# ======================================
+x64/**/assets/
+x64/**/Intermediate/
+x64/**/Release/
