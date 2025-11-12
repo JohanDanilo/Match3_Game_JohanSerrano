@@ -428,6 +428,9 @@ FodyWeavers.xsd
 saves/*
 !saves/.gitkeep
 
+# Ignorar cualquier saves dentro de builds temporales ===
+x64/**/saves/
+
 # === 2️ Incluir carpeta x64 raíz (build ejecutable con SFML) ===
 # No ignorar la carpeta base
 !/x64/
