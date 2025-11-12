@@ -11,10 +11,9 @@
 - [Características Principales](#-características-principales)
 - [Requisitos del Sistema](#️-requisitos-del-sistema)
 - [Instalación](#-instalación)
-- [Ejecución](#-ejecución)
 - [Distribución del Ejecutable](#-distribución-del-ejecutable)
 - [Estructura del Proyecto](#️-estructura-del-proyecto)
-- [Arquitectura](#️-arquitectura)
+- [Arquitectura](../../../OneDrive/Escritorio/readme_complete.md#️-arquitectura)
 - [Mecánicas de Juego](#-mecánicas-de-juego)
 - [Sistema de Niveles](#-sistema-de-niveles)
 - [Capturas de Pantalla](#️-capturas-de-pantalla)
@@ -62,48 +61,59 @@
 
 ---
 
-## 🚀 Instalación
+## 🚀 Tutorial de instalación — *Costa Rican Enchanted Gems*
 
-### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/JohanDanilo/Match3_Game_JohanSerrano.git
-cd Match3_Game_JohanSerrano
-```
-
-### 2. Abrir la solución en Visual Studio
-
-```
-Match3_Game_JohanSerrano.sln
-```
-
-### 3. Configurar el proyecto
-
-Selecciona la configuración:
-
-```
-Release | x64
-
-```
-
-### 4. Compilar
-
-- **Menú:** `Compilar → Compilar solución`
-- **Atajo:** `Ctrl + Shift + B`
+Sigue estos pasos para clonar, abrir y ejecutar el proyecto en **Visual Studio 2022**.
 
 ---
 
-## 🎯 Ejecución
+### 🧩 Paso 1: Copiar el enlace del repositorio
 
-### Desde Visual Studio
+Abre la página del repositorio en GitHub y copia el enlace HTTPS.
 
-1. Presiona `Ctrl + F5` o selecciona **Depurar → Iniciar sin depurar**
+![Paso 1: Copiar URL del repositorio](./docs/1.png "Copia la URL del repositorio desde GitHub")
 
-### Directamente desde el ejecutable
+---
 
-```
-x64/Release/main.exe
-```
+### 🧠 Paso 2: Abrir Visual Studio y clonar el repositorio
+
+En la pantalla de inicio de **Visual Studio 2022**, haz clic en **“Clonar un repositorio”**.
+
+![Paso 2: Clonar un repositorio en Visual Studio](./docs/2.png "Selecciona la opción Clonar un repositorio")
+
+---
+
+### 🧩 Paso 3: Pegar la URL y clonar
+
+Pega la URL del repositorio en el campo correspondiente, selecciona la ruta local donde guardar el proyecto y haz clic en **“Clonar”**.
+
+![Paso 3: Pegar URL y clonar](./docs/3.png "Pega la URL y presiona el botón Clonar")
+
+---
+
+### ▶️ Paso 4: Ejecutar el juego
+
+Una vez clonado, selecciona el **Depurador local de Windows** (o presiona `Ctrl + F5`) para ejecutar el juego.
+
+![Paso 4: Ejecutar el depurador de Windows](./docs/4.png "Presiona el botón de depuración para iniciar el juego")
+
+---
+
+### 🎮 Paso 5: ¡A disfrutar!
+
+El juego se abrirá en una nueva ventana.  
+¡Disfruta de **Costa Rican Enchanted Gems**! 🌴💎
+
+![Paso 5: Juego ejecutándose correctamente](./docs/5.png "Pantalla inicial del juego funcionando correctamente")
+
+---
+
+### ✅ Requisitos previos
+
+- Visual Studio 2022 o superior  
+- SFML 2.6.2 (incluida en la carpeta `/external`)  
+- Compilador C++ (MSVC recomendado)  
+- Windows 10/11  
 
 ---
 
@@ -121,42 +131,58 @@ x64/Release/
 
 ## 🗂️ Estructura del Proyecto
 
-
-```
 Match3_Game_JohanSerrano/
-├── external/
-│   └── SFML-2.6.2/        # include / lib / bin
-├── assets/
-│   ├── data/              # Configuración de niveles (levels.txt, etc.)
-│   ├── spritesheet.png
-│   ├── background.png
-│   ├── mainMenu.png
-│   └── fonts/
-│       └── retro_game.ttf
-├── saves/
-│   └── player_data.txt
-├── src/
-│   ├── Game.cpp/.h
-│   ├── Board.cpp/.h
-│   ├── Gem.cpp/.h
-│   ├── Level.cpp/.h
-│   ├── LevelManager.cpp/.h
-│   ├── Objective.cpp/.h
-│   ├── Obstacle.cpp/.h
-│   ├── ResourceManager.cpp/.h
-│   ├── UIManager.cpp/.h
-│   ├── UXManager.cpp/.h
-│   └── main.cpp
-├── docs/
-│   ├── UML_Diagram.png
-│   └── Technical_Report.pdf
-└── README.md
+│
+├── .gitignore
+├── Match3_Game_JohanSerrano.sln # Solución principal del proyecto
+├── notes.md # Notas o bitácora de desarrollo
+├── README.md # Documento principal (este archivo)
+│
+├── Match3_Game_JohanSerrano/ # Carpeta raíz del código fuente
+│ ├── Board.cpp / Board.h
+│ ├── BombGem.cpp / BombGem.h
+│ ├── Game.cpp / Game.h
+│ ├── Gem.cpp / Gem.h
+│ ├── IceGem.cpp / IceGem.h
+│ ├── Level.cpp / Level.h
+│ ├── LevelManager.cpp / LevelManager.h
+│ ├── NormalGem.cpp / NormalGem.h
+│ ├── Objective.cpp / Objective.h
+│ ├── Obstacle.cpp / Obstacle.h
+│ ├── PersistenceManager.cpp / PersistenceManager.h
+│ ├── Player.cpp / Player.h
+│ ├── ResourceManager.cpp / ResourceManager.h
+│ ├── UIManager.cpp / UIManager.h
+│ ├── UXManager.cpp / UXManager.h
+│ ├── main.cpp
+│ ├── saves/ # Progreso del jugador
+│ │ └── player_data.txt
+│ └── x64/ # Archivos generados por compilación
+│
+├── assets/ # Recursos gráficos y configuración
+│ ├── data/ # Configuración de niveles (levels.txt, etc.)
+│ ├── fonts/
+│ │ └── gameFont.ttf
+│ ├── background.png
+│ ├── mainMenu.png
+│ ├── spritesheet.png
+│ └── other resources...
+│
+├── docs/ # Documentación del proyecto
+│ ├── 1.png … 5.png # Capturas del tutorial de instalación
+│ ├── UML_Diagram.png # Diagrama UML
+│ └── Technical_Report.pdf # Informe técnico
+│
+├── external/ # Librerías externas
+│ └── SFML-2.6.2/ # include / lib / bin de SFML
+│
+└── x64/ # Build final (Debug / Release)
 
 ```
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ [Arquitectura]
 
 El proyecto sigue principios de **Programación Orientada a Objetos** con una clara separación de responsabilidades:
 
@@ -213,16 +239,19 @@ Al completar un nivel, se desbloquea el siguiente en el mapa de progreso.
 ## 🖼️ Capturas de Pantalla
 
 ### Menú Principal
-![Menú Principal](assets/mainMenu.png)
+![Menú Principal](docs/welcomeMenu.png)
 
 ### Mapa de Niveles
-> 📝 Agrega captura: `docs/screenshots/level_map.png`
+![Mapa de niveles](docs/levelMap.png)
 
 ### Juego en Acción
-> 📝 Agrega captura: `docs/screenshots/gameplay.png`
+![Juego en accion](docs/gamePlay.png)
 
-### Pantalla de Victoria
-> 📝 Agrega captura: `docs/screenshots/victory_screen.png`
+### Pantalla de Nivel Completado
+![Nivel Completado](docs/victory.png)
+
+### Pantalla de mejores puntajes
+![Mejores puntajes](docs/hallOfFame.png)
 
 ---
 
