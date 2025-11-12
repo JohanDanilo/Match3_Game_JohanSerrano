@@ -18,7 +18,7 @@
 - [Sistema de Niveles](#-sistema-de-niveles)
 - [Capturas de Pantalla](#️-capturas-de-pantalla)
 - [Contribuciones](#-contribuciones)
-- [Autor](#-autor)
+- [Autor](#-autor-del-proyecto)
 - [Licencia](#-licencia)
 - [Agradecimientos](#-agradecimientos)
 - [Notas Adicionales](#-notas-adicionales)
@@ -263,7 +263,7 @@ Si encuentras algún error:
 
 ---
 
-## 👨‍💻 Autor
+## 🧑‍💻 Autor del proyecto
 
 **Johan Serrano Víctor**
 
