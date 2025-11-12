@@ -17,12 +17,12 @@
 - [Arquitectura](#️-arquitectura)
 - [Mecánicas de Juego](#-mecánicas-de-juego)
 - [Sistema de Niveles](#-sistema-de-niveles)
-- [Solución de Problemas](#-solución-de-problemas)
-- [Documentación Técnica](#-documentación-técnica)
 - [Capturas de Pantalla](#️-capturas-de-pantalla)
 - [Contribuciones](#-contribuciones)
 - [Autor](#-autor)
 - [Licencia](#-licencia)
+- [Agradecimientos](#-agradecimientos)
+- [Notas Adicionales](#-notas-adicionales)
 
 ---
 
@@ -38,7 +38,6 @@
 - 🎨 **Estilo visual pixel art retro** inspirado en escenarios tropicales costarricenses
 - 💾 **Persistencia de datos** mediante archivos `.txt` en directorio `/saves`
 - 📦 **Código portable** sin dependencias de rutas absolutas
-- 🎵 **Sistema de audio** con efectos de sonido y música de fondo
 - ⚡ **Animaciones fluidas** para movimientos y combinaciones
 
 ---
