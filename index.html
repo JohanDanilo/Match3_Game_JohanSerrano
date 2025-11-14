@@ -293,8 +293,10 @@ footer {
         <div class="section download-section">
                 <h2>⬇️ DESCARGAR JUEGO</h2>
                 <p>¡Descarga e instala el juego ahora!</p>
-                <a href="#" class="download-btn" id="downloadBtn">
-                    DESCARGAR INSTALADOR
+                <a href="https://github.com/TU_USUARIO/TU_REPO/releases/download/v1.0.0/ARCHIVO.exe"
+                   class="download-btn"
+                   id="downloadBtn">
+                   DESCARGAR INSTALADOR
                 </a>
                 <p style="font-size: 0.7em; margin-top: 18px; opacity: 0.8;">
                     Compatible con Windows 10/11
@@ -331,11 +333,6 @@ function createGem() {
 }
 setInterval(createGem, 500);
 
-// Botón descarga
-document.getElementById('downloadBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    alert("Configura tu enlace de descarga en el código.");
-});
 </script>
 
 </body>
