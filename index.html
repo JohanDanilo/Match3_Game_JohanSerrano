@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Costa Rican Enchanted Gems</title>
+
+    <!-- Fuente retro -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================
+   CONFIGURACIÓN GLOBAL
+   =========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, h1, h2, p, a, button, .feature-box {
+    font-family: 'Press Start 2P', cursive !important;
+}
+
+/* ===========================
+   GRADIENTE ANIMADO BANDERA CR
+   =========================== */
+
+body.light-theme {
+    background: linear-gradient(45deg,
+        #002b7f 0%,
+        #003fae 12%,
+        #ffffff 25%,
+        #ce1126 45%,
+        #ce1126 55%,
+        #ffffff 75%,
+        #003fae 88%,
+        #002b7f 100%
+    );
+    background-size: 350% 350%;
+    color: #0d1e35;
+}
+
+body.dark-theme {
+    background: linear-gradient(45deg,
+        #001537 0%,
+        #003068 12%,
+        #dcdcdc 25%,
+        #8b0d1e 45%,
+        #8b0d1e 55%,
+        #dcdcdc 75%,
+        #003068 88%,
+        #001537 100%
+    );
+    background-size: 350% 350%;
+    color: #ffffff;
+}
+
+/* Animación del gradiente */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+body {
+    animation: gradientShift 18s ease-in-out infinite;
+    min-height: 100vh;
+}
+
+/* ===========================
+   LAYOUT PRINCIPAL
+   =========================== */
+
+.container {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    padding: 60px 20px 20px;
+}
+
+h1 {
+    font-size: 2.3em;
+    white-space: nowrap;
+    text-shadow: 4px 4px 0 rgba(0,0,0,0.35);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.subtitle {
+    font-size: 0.9em;
+    margin-top: 12px;
+    opacity: 0.95;
+}
+
+/* ===========================
+   GAME WINDOW – retro style
+   =========================== */
+
+.game-window {
+    background: #ffffffdd;
+    border-radius: 16px;
+    padding: 40px;
+    margin: 50px auto;
+    border: 5px solid #000;
+    box-shadow: 
+        0 0 0 6px rgba(255,255,255,0.7),
+        0 12px 35px rgba(0,0,0,0.45);
+}
+
+.dark-theme .game-window {
+    background: #000000dd;
+    color: #fff;
+    border-color: #fff;
+}
+
+/* ===========================
+   SECCIONES
+   =========================== */
+
+.section {
+    margin: 40px 0;
+}
+
+h2 {
+    text-align: center;
+    font-size: 1.3em;
+    margin-bottom: 20px;
+}
+
+.description {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.9;
+    font-size: 0.85em;
+}
+
+/* ===========================
+   FEATURES – paneles bonitos retro
+   =========================== */
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+    margin-top: 30px;
+}
+
+.feature-box {
+    background: #ffffff;
+    border: 4px solid #000;
+    border-radius: 12px;
+    padding: 18px 5px;
+    text-align: center;
+    font-size: 0.65em;
+    transition: 0.25s;
+}
+
+.dark-theme .feature-box {
+    background: #000000;
+    border-color: #ffffff;
+    color: #ffffff;
+}
+
+.feature-box:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+}
+
+/* ===========================
+   BOTÓN DESCARGA
+   =========================== */
+
+.download-section {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.download-btn {
+    display: inline-block;
+    padding: 18px 38px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.1em;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    border: 4px solid #000;
+    margin-top: 18px;
+    background: #ce1126;
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+.download-btn:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+}
+
+/* ===========================
+   FOOTER
+   =========================== */
+
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-bottom: 40px;
+    font-size: 0.7em;
+    opacity: 0.90;
+}
+
+/* ===========================
+   GEMAS ANIMADAS
+   =========================== */
+
+.gems {
+    position: fixed;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+}
+
+.gem {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+    }
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+
+@media(max-width:900px) {
+    h1 {
+        font-size: 1.6em;
+        white-space: normal;
+    }
+    .features {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="gems" id="gems"></div>
+
+<div class="container">
+    <header>
+        <h1>💎 COSTA RICAN ENCHANTED GEMS 💎</h1>
+        <p class="subtitle">¡Una aventura mágica de Costa Rica!</p>
+    </header>
+
+    <div class="game-window">
+        <div class="section">
+            <h2>📖 SOBRE EL JUEGO</h2>
+            <p class="description">
+                Sumérgete en una aventura única donde las gemas encantadas de Costa Rica cobran vida. 
+                Conecta gemas mágicas, desbloquea poderes especiales y explora el folklore costarricense 
+                en este emocionante juego de puzzle retro.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>✨ CARACTERÍSTICAS</h2>
+            <div class="features">
+                <div class="feature-box">🎮<br><br>Jugabilidad<br>Adictiva</div>
+                <div class="feature-box">🌟<br><br>Gemas<br>Especiales</div>
+                <div class="feature-box">🏆<br><br>Sistema de<br>Puntuación</div>
+                <div class="feature-box">🎨<br><br>Gráficos<br>Retro</div>
+            </div>
+        </div>
+
+        <div class="section download-section">
+                <h2>⬇️ DESCARGAR JUEGO</h2>
+                <p>¡Descarga e instala el juego ahora!</p>
+                <a href="#" class="download-btn" id="downloadBtn">
+                    DESCARGAR INSTALADOR
+                </a>
+                <p style="font-size: 0.7em; margin-top: 18px; opacity: 0.8;">
+                    Compatible con Windows 10/11
+                </p>
+        </div>
+        
+    </div>
+
+    <footer>
+        © 2025 Costa Rican Enchanted Gems<br>
+        Hecho con ❤️ en Costa Rica
+    </footer>
+</div>
+
+<script>
+// Tema automático
+function setTheme() {
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.className = dark ? 'dark-theme' : 'light-theme';
+}
+setTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setTheme);
+
+// Gemas cayendo
+function createGem() {
+    const icons = ['💎','💠','🔷','🔶','⭐','✨'];
+    const gem = document.createElement('div');
+    gem.className = 'gem';
+    gem.textContent = icons[Math.floor(Math.random()*icons.length)];
+    gem.style.left = Math.random()*100 + 'vw';
+    gem.style.animationDuration = (Math.random()*4 + 5) + 's';
+    document.getElementById('gems').appendChild(gem);
+    setTimeout(()=>gem.remove(),8000);
+}
+setInterval(createGem, 500);
+
+// Botón descarga
+document.getElementById('downloadBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert("Configura tu enlace de descarga en el código.");
+});
+</script>
+
+</body>
+</html>
